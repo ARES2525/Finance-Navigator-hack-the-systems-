@@ -1,0 +1,311 @@
+<!-- frontend/taxes-loans.html -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Taxes & Loans — Finance Navigator</title>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<style>
+  :root{
+    --bg: #0d1222; --panel:#0f1a36; --muted:#9fb0d8; --accent:#5ad0ff; --accent-2:#8be7ff; --good:#34d399; --warn:#ffd86b; --bad:#ff7b7b;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  }
+  body{margin:0;background:linear-gradient(180deg,var(--bg),#051026 80%);color:#e6f2ff;min-height:100vh}
+  header{padding:20px 28px;background:rgba(255,255,255,0.02);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.03)}
+  header h1{margin:0;color:var(--accent)}
+  .wrap{max-width:1100px;margin:24px auto;padding:0 18px}
+  .grid{display:grid;gap:16px}
+  .g-3{grid-template-columns:1fr 1fr 420px}
+  @media(max-width:980px){.g-3{grid-template-columns:1fr}}
+  .card{background:linear-gradient(180deg,var(--panel),#08102a);border-radius:12px;padding:16px;border:1px solid rgba(255,255,255,0.04)}
+  label{color:var(--muted);font-size:13px}
+  .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
+  input[type="number"], select {padding:8px;border-radius:8px;border:none;background:#071020;color:#e6f2ff}
+  input[type="range"]{width:100%}
+  .btn{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#021028;border:none;padding:10px 12px;border-radius:8px;font-weight:700;cursor:pointer}
+  .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.05)}
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
+  th,td{padding:8px;border-bottom:1px dashed rgba(255,255,255,0.03);text-align:left}
+  .muted{color:var(--muted)}
+  .metric{background:rgba(255,255,255,0.02);padding:10px;border-radius:8px}
+  .large{font-size:20px;font-weight:800}
+  .hint{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+  <header>
+    <h1>Taxes & Loans — Finance Navigator</h1>
+    <div class="muted">Backend API: <code>http://localhost:8000</code></div>
+  </header>
+
+  <div class="wrap grid g-3">
+    <!-- TAX CALCULATOR -->
+    <section class="card">
+      <h3>Progressive Tax Calculator</h3>
+      <p class="muted">Enter income and deductions. Default slabs are pre-filled but editable.</p>
+
+      <div style="margin-top:8px">
+        <label>Annual Income (₹)</label>
+        <div class="row"><input id="taxIncome" type="number" value="1200000" /></div>
+      </div>
+      <div style="margin-top:8px">
+        <label>Total Deductions (₹)</label>
+        <div class="row"><input id="taxDed" type="number" value="150000" /></div>
+      </div>
+
+      <div style="margin-top:8px">
+        <label>Tax Slabs (JSON)</label>
+        <textarea id="taxSlabs" rows="6" style="width:100%;background:#071026;color:#e6f2ff;border-radius:8px;padding:8px;border:none;">
+[
+  {"upto":250000, "rate":0.0},
+  {"upto":500000, "rate":0.05},
+  {"upto":1000000, "rate":0.20},
+  {"upto":null, "rate":0.30}
+]
+        </textarea>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="calcTaxBtn">Calculate Tax</button>
+        <button class="btn ghost" id="resetSlabsBtn">Reset Slabs</button>
+      </div>
+
+      <div id="taxResult" style="margin-top:12px"></div>
+    </section>
+
+    <!-- LOAN CALCULATOR -->
+    <section class="card">
+      <h3>Loan Amortization & Prepay Simulator</h3>
+      <p class="muted">Compute monthly payment, amortization schedule and compare prepay vs investing the extra.</p>
+
+      <div style="margin-top:8px"><label>Loan principal (₹)</label><div class="row"><input id="loanPrincipal" type="number" value="1500000" /></div></div>
+      <div style="margin-top:8px"><label>Annual interest rate (%)</label><div class="row"><input id="loanRate" type="number" value="8.5" step="0.01" /></div></div>
+      <div style="margin-top:8px"><label>Term (years)</label><div class="row"><input id="loanYears" type="number" value="20" /></div></div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="calcLoanBtn">Compute Amortization</button>
+      </div>
+
+      <div id="loanResult" style="margin-top:12px"></div>
+
+      <hr style="border:none;border-top:1px dashed rgba(255,255,255,0.04);margin:12px 0">
+
+      <h4>Prepay vs Invest</h4>
+      <div style="margin-top:8px"><label>Extra per month you can pay (₹)</label>
+        <div class="row"><input id="extraMonthly" type="number" value="5000" /></div>
+      </div>
+      <div style="margin-top:8px"><label>Expected invest return (%)</label>
+        <div class="row"><input id="investRate" type="number" value="10" step="0.1" /></div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="calcPrepayBtn">Compare</button>
+      </div>
+
+      <div id="prepayResult" style="margin-top:12px"></div>
+    </section>
+
+    <!-- Right column: quiz + tips -->
+    <aside class="card">
+      <h3>Quick Quiz — Taxes & Loans</h3>
+      <p class="muted">Fetch quiz from backend and submit answers.</p>
+      <div style="margin-top:8px">
+        <button class="btn" id="loadQuizBtn">Load Quiz</button>
+      </div>
+
+      <div id="quizArea" style="margin-top:12px"></div>
+
+      <hr style="border:none;border-top:1px dashed rgba(255,255,255,0.04);margin:12px 0">
+
+      <h4>Practical Tips</h4>
+      <ul class="muted">
+        <li>Prioritize paying down smallest high-interest debts first for momentum (Snowball).</li>
+        <li>Use Avalanche (highest APR first) to minimize interest paid over time.</li>
+        <li>Consider tax-advantaged accounts to reduce taxable income (check local rules).</li>
+        <li>Maintain liquidity before prepaying — keep emergency fund.</li>
+      </ul>
+    </aside>
+  </div>
+
+<script>
+const API_BASE = 'http://localhost:8000';
+
+// Helper to POST JSON and parse
+async function postJSON(path, data){
+  const res = await fetch(API_BASE + path, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  });
+  if(!res.ok){
+    const txt = await res.text();
+    throw new Error('API error ' + res.status + ': ' + txt);
+  }
+  return res.json();
+}
+
+// ---------- Tax Calculator ----------
+document.getElementById('calcTaxBtn').addEventListener('click', async ()=>{
+  const income = Number(document.getElementById('taxIncome').value) || 0;
+  const ded = Number(document.getElementById('taxDed').value) || 0;
+  let slabs;
+  try{
+    slabs = JSON.parse(document.getElementById('taxSlabs').value);
+  }catch(e){
+    alert('Invalid slabs JSON');
+    return;
+  }
+  try{
+    const result = await postJSON('/api/tax', {annual_income: income, deductions: ded, slabs});
+    renderTaxResult(result);
+  }catch(err){
+    alert(err.message);
+  }
+});
+
+document.getElementById('resetSlabsBtn').addEventListener('click', ()=>{
+  document.getElementById('taxSlabs').value = JSON.stringify([
+    {"upto":250000,"rate":0.0},
+    {"upto":500000,"rate":0.05},
+    {"upto":1000000,"rate":0.20},
+    {"upto":null,"rate":0.30}
+  ], null, 2);
+});
+
+function renderTaxResult(res){
+  const out = document.getElementById('taxResult');
+  out.innerHTML = `
+    <div class="metric"><div class="large">${formatINR(res.tax_due)}</div><div class="hint">Tax due • Effective rate: ${res.effective_rate_pct}%</div></div>
+    <table>
+      <thead><tr><th>Band</th><th>Taxable</th><th>Rate</th><th>Tax</th></tr></thead>
+      <tbody>
+        ${res.breakdown.map(b=>`<tr>
+          <td>${b.band_from} - ${b.band_to===null? '∞' : b.band_to}</td>
+          <td>${formatINR(b.taxable)}</td>
+          <td>${(b.rate*100).toFixed(2)}%</td>
+          <td>${formatINR(b.tax)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+// ---------- Loan Amortization ----------
+document.getElementById('calcLoanBtn').addEventListener('click', async ()=>{
+  const principal = Number(document.getElementById('loanPrincipal').value) || 0;
+  const rate = Number(document.getElementById('loanRate').value) || 0;
+  const years = Number(document.getElementById('loanYears').value) || 0;
+  try{
+    const result = await postJSON('/api/loan/amortize', {principal, annual_rate_pct: rate, years, payments_per_year: 12});
+    renderLoanResult(result);
+  }catch(err){
+    alert(err.message);
+  }
+});
+
+function renderLoanResult(r){
+  const out = document.getElementById('loanResult');
+  out.innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div class="metric"><div class="large">${formatINR(r.payment)}</div><div class="hint">Periodic payment</div></div>
+      <div class="metric"><div class="large">${formatINR(r.total_interest)}</div><div class="hint">Total interest over loan</div></div>
+      <div class="metric"><div class="large">${r.periods} payments</div><div class="hint">Loan periods</div></div>
+    </div>
+    <h4 style="margin-top:12px">Amortization (first 12 rows)</h4>
+    <table><thead><tr><th>#</th><th>Payment</th><th>Principal</th><th>Interest</th><th>Remain</th></tr></thead>
+    <tbody>
+      ${r.schedule.slice(0,12).map(s=>`<tr><td>${s.period}</td><td>${formatINR(s.payment)}</td><td>${formatINR(s.principal_paid)}</td><td>${formatINR(s.interest_paid)}</td><td>${formatINR(s.remaining_balance)}</td></tr>`).join('')}
+    </tbody></table>
+  `;
+}
+
+// ---------- Prepay vs Invest ----------
+document.getElementById('calcPrepayBtn').addEventListener('click', async ()=>{
+  const principal = Number(document.getElementById('loanPrincipal').value) || 0;
+  const rate = Number(document.getElementById('loanRate').value) || 0;
+  const years = Number(document.getElementById('loanYears').value) || 0;
+  const extra = Number(document.getElementById('extraMonthly').value) || 0;
+  const investRate = Number(document.getElementById('investRate').value) || 0;
+  try{
+    const result = await postJSON('/api/loan/prepay_vs_invest', {
+      principal, annual_rate_pct: rate, years, extra_monthly: extra, invest_rate_pct: investRate, payments_per_year: 12
+    });
+    renderPrepayResult(result);
+  }catch(err){
+    alert(err.message);
+  }
+});
+
+function renderPrepayResult(r){
+  const out = document.getElementById('prepayResult');
+  out.innerHTML = `
+    <div class="metric"><div style="font-weight:800">${formatINR(r.interest_saved)}</div><div class="hint">Interest saved by prepaying</div></div>
+    <div style="margin-top:8px" class="muted">${r.advice}</div>
+    <h4 style="margin-top:10px">If you instead invested the extra monthly</h4>
+    <div class="metric"><div style="font-weight:800">${formatINR(r.invest_future_value_of_extra)}</div><div class="hint">Estimated future value over original loan term</div></div>
+  `;
+}
+
+// ---------- Quiz ----------
+document.getElementById('loadQuizBtn').addEventListener('click', async ()=>{
+  const res = await fetch(API_BASE + '/api/quiz');
+  const questions = await res.json();
+  renderQuiz(questions);
+});
+
+function renderQuiz(questions){
+  const container = document.getElementById('quizArea');
+  container.innerHTML = '';
+  const form = document.createElement('div');
+  questions.forEach((q, idx)=>{
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.style.marginBottom = '8px';
+    div.innerHTML = `<div style="font-weight:700">${idx+1}. ${q.q}</div>`;
+    q.choices.forEach((c,i)=>{
+      const id = `q_${q.id}_${i}`;
+      const label = document.createElement('label');
+      label.style.display='block';
+      label.style.marginTop='6px';
+      label.innerHTML = `<input name="${q.id}" type="radio" value="${i}" /> ${c}`;
+      div.appendChild(label);
+    });
+    form.appendChild(div);
+  });
+  const submitBtn = document.createElement('button');
+  submitBtn.className = 'btn';
+  submitBtn.textContent = 'Submit Answers';
+  submitBtn.addEventListener('click', async ()=>{
+    // gather answers
+    const answers = {};
+    questions.forEach(q=>{
+      const sel = document.querySelector(`input[name="${q.id}"]:checked`);
+      if(sel) answers[q.id] = Number(sel.value);
+    });
+    try{
+      const res = await postJSON('/api/quiz/score', {answers});
+      renderQuizResult(res);
+    }catch(err){
+      alert(err.message);
+    }
+  });
+  container.appendChild(form);
+  container.appendChild(submitBtn);
+}
+
+function renderQuizResult(res){
+  const area = document.getElementById('quizArea');
+  area.innerHTML = `<div class="card"><div style="font-weight:800;font-size:18px">Score: ${res.score} / ${res.out_of}</div>
+    <div style="margin-top:8px">${res.feedback.map(f=>`<div style="margin-top:6px"><b>${f.id}</b> — ${f.correct?'<span style="color:var(--good)">Correct</span>':'<span style="color:var(--bad)">Wrong</span>'}<div class="muted">${f.explanation}</div></div>`).join('')}</div></div>`;
+}
+
+// ---------- Utilities ----------
+function formatINR(x){
+  return '₹' + Number(x).toLocaleString('en-IN', {maximumFractionDigits:2});
+}
+</script>
+</body>
+</html>
