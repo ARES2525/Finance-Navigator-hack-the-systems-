@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Understand Money — Finance Navigator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0b1020; --panel:#121933; --panel-2:#0f1430; --text:#f5f7ff; --muted:#96a0c8; --accent:#6aa9ff; --accent-2:#7ef0ff;
+    --good:#3bd671; --warn:#ffcc66; --bad:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,var(--bg),#0a0f26 60%,#0a0f26);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,sans-serif}
+  a{color:var(--accent);text-decoration:none}
+  header{position:sticky;top:0;z-index:50;background:rgba(18,25,51,.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid rgba(255,255,255,.06)}
+  header h1{font-size:18px;margin:0;color:var(--accent);font-weight:800;letter-spacing:.3px}
+  .pill{display:inline-flex;gap:8px;align-items:center;background:#0c1330;border:1px solid rgba(255,255,255,.08);padding:8px 12px;border-radius:999px;color:var(--muted);font-size:12px}
+  .wrap{max-width:1200px;margin:24px auto;padding:0 18px}
+  .hero{display:grid;grid-template-columns:1.2fr .8fr;gap:20px;align-items:center;margin:10px 0 20px}
+  .hero .copy{background:var(--panel);padding:22px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .hero h2{margin:0 0 8px;font-size:28px}
+  .hero p{margin:0;color:var(--muted)}
+  .hero .cta{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap}
+  .btn{background:var(--accent);color:#081022;border:none;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer}
+  .btn.secondary{background:#18224a;color:var(--text);border:1px solid rgba(255,255,255,.12)}
+  .canvasCard{background:var(--panel);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:18px}
+  .grid{display:grid;gap:18px}
+  .g-2{grid-template-columns:1fr 1fr}
+  .g-3{grid-template-columns:repeat(3,1fr)}
+  @media (max-width:960px){.hero{grid-template-columns:1fr}.g-2,.g-3{grid-template-columns:1fr}}
+  h3{margin:0 0 10px;font-size:20px}
+  .muted{color:var(--muted)}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .ctrl{background:var(--panel-2);border:1px solid rgba(255,255,255,.08);padding:10px;border-radius:12px;display:flex;flex:1;gap:10px;align-items:center;min-width:240px}
+  .ctrl label{font-size:12px;color:var(--muted);min-width:110px}
+  .ctrl input[type="range"]{flex:1}
+  .metric{background:#0d1431;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:2px;min-width:140px}
+  .metric b{font-size:18px}
+  .badge{font-size:11px;color:#000;background:var(--accent-2);border-radius:999px;padding:3px 8px;font-weight:700}
+  .legend{display:flex;gap:10px;flex-wrap:wrap}
+  .leg{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted)}
+  .swatch{width:14px;height:14px;border-radius:4px}
+  .table{width:100%;border-collapse:collapse;font-size:13px}
+  .table th,.table td{padding:8px;border-bottom:1px solid rgba(255,255,255,.06);text-align:left}
+  .tip{font-size:13px;color:var(--muted)}
+  .score{font-size:24px;font-weight:800}
+  .good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+  .flowSvg{width:100%;height:360px}
+  .node{fill:#1b2553;stroke:rgba(255,255,255,.1)}
+  .arrow{fill:none;stroke-width:10}
+  .arrowLabel{font-size:12px;fill:var(--muted)}
+  footer{color:var(--muted);text-align:center;padding:28px 0}
+  .chip{background:#0d1638;border:1px solid rgba(255,255,255,.08);padding:6px 10px;border-radius:999px;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Understand Money</h1>
+  <div class="pill">Part of <b style="color:var(--accent)">&nbsp;Finance Navigator</b></div>
+</header>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="copy">
+      <h2>Make money make sense—visually</h2>
+      <p>Play with live simulations to see how taxes, saving, compounding, loans, and inflation shape your wallet. No jargon. Just clarity.</p>
+      <div class="cta">
+        <a class="btn" href="#flow">Explore the Money Flow</a>
+        <a class="btn secondary" href="#compound">See Compounding</a>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <span class="chip">Interactive simulators</span>
+        <span class="chip">Charts & insights</span>
+        <span class="chip">Actionable tips</span>
+      </div>
+    </div>
+    <div class="canvasCard">
+      <canvas id="heroChart" height="240"></canvas>
+      <div class="tip" style="margin-top:8px">Tip: Drag the sliders below to watch the arrows and numbers update in real time.</div>
+    </div>
+  </section>
+
+  <!-- CIRCULAR FLOW -->
+  <section id="flow" class="grid g-2">
+    <div class="canvasCard">
+      <h3>Circular Flow of Money — Interactive</h3>
+      <p class="muted" style="margin-bottom:8px">Adjust tax and savings rates. See how money moves between Households, Firms, Banks, and Government.</p>
+
+      <div class="row" style="margin-bottom:10px">
+        <div class="ctrl">
+          <label>Annual Income (₹k)</label>
+          <input id="inc" type="range" min="50" max="2000" step="10" value="600">
+          <span id="incV" class="badge">₹600k</span>
+        </div>
+        <div class="ctrl">
+          <label>Tax Rate (%)</label>
+          <input id="tax" type="range" min="0" max="40" step="1" value="12">
+          <span id="taxV" class="badge">12%</span>
+        </div>
+        <div class="ctrl">
+          <label>Savings Rate (%)</label>
+          <input id="sav" type="range" min="0" max="60" step="1" value="20">
+          <span id="savV" class="badge">20%</span>
+        </div>
+      </div>
+
+      <svg class="flowSvg" id="flowSvg" viewBox="0 0 1000 360" preserveAspectRatio="xMidYMid meet" aria-label="Circular flow diagram">
+        <!-- Nodes -->
+        <g>
+          <rect class="node" x="60"  y="60"  width="200" height="80" rx="14"></rect>
+          <text x="160" y="105" text-anchor="middle">Households</text>
+
+          <rect class="node" x="740" y="60"  width="200" height="80" rx="14"></rect>
+          <text x="840" y="105" text-anchor="middle">Firms</text>
+
+          <rect class="node" x="60"  y="220" width="200" height="80" rx="14"></rect>
+          <text x="160" y="265" text-anchor="middle">Government</text>
+
+          <rect class="node" x="740" y="220" width="200" height="80" rx="14"></rect>
+          <text x="840" y="265" text-anchor="middle">Banks</text>
+        </g>
+        <!-- Arrows paths (updated by JS) -->
+        <defs>
+          <marker id="arrowHead" markerWidth="10" markerHeight="8" refX="10" refY="4" orient="auto">
+            <polygon points="0 0, 10 4, 0 8" fill="currentColor"></polygon>
+          </marker>
+        </defs>
+
+        <!-- Wages: Firms -> Households -->
+        <path id="pWage" class="arrow" stroke="var(--accent)" marker-end="url(#arrowHead)"></path>
+        <text id="lWage" class="arrowLabel"></text>
+
+        <!-- Consumption: Households -> Firms -->
+        <path id="pCons" class="arrow" stroke="#7ef0ff" marker-end="url(#arrowHead)"></path>
+        <text id="lCons" class="arrowLabel"></text>
+
+        <!-- Taxes: Households -> Government -->
+        <path id="pTax" class="arrow" stroke="#ffcc66" marker-end="url(#arrowHead)"></path>
+        <text id="lTax" class="arrowLabel"></text>
+
+        <!-- Savings: Households -> Banks -->
+        <path id="pSav" class="arrow" stroke="#9b8cff" marker-end="url(#arrowHead)"></path>
+        <text id="lSav" class="arrowLabel"></text>
+
+        <!-- Govt Spend: Government -> Firms -->
+        <path id="pG" class="arrow" stroke="#5ad59b" marker-end="url(#arrowHead)"></path>
+        <text id="lG" class="arrowLabel"></text>
+
+        <!-- Investment: Banks -> Firms -->
+        <path id="pInv" class="arrow" stroke="#ffa1c3" marker-end="url(#arrowHead)"></path>
+        <text id="lInv" class="arrowLabel"></text>
+      </svg>
+
+      <div class="legend" style="margin-top:8px">
+        <span class="leg"><span class="swatch" style="background:var(--accent)"></span>Wages</span>
+        <span class="leg"><span class="swatch" style="background:#7ef0ff"></span>Consumption</span>
+        <span class="leg"><span class="swatch" style="background:#ffcc66"></span>Taxes</span>
+        <span class="leg"><span class="swatch" style="background:#9b8cff"></span>Savings</span>
+        <span class="leg"><span class="swatch" style="background:#5ad59b"></span>Govt Spending</span>
+        <span class="leg"><span class="swatch" style="background:#ffa1c3"></span>Investment</span>
+      </div>
+    </div>
+
+    <div class="canvasCard">
+      <h3>Where does your ₹ go?</h3>
+      <table class="table" id="flowTable" aria-label="money breakdown table">
+        <thead>
+          <tr><th>Flow</th><th>Amount (₹)</th><th>Share</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p class="tip" id="flowTip" style="margin-top:8px"></p>
+    </div>
+  </section>
+
+  <!-- COMPOUND INTEREST -->
+  <section id="compound" class="grid g-2" style="margin-top:18px">
+    <div class="canvasCard">
+      <h3>Compound Interest Playground</h3>
+      <div class="row">
+        <div class="ctrl">
+          <label>Initial Amount (₹)</label>
+          <input id="ciP" type="range" min="0" max="500000" step="5000" value="100000">
+          <span id="ciPV" class="badge">₹100,000</span>
+        </div>
+        <div class="ctrl">
+          <label>Monthly Add (₹)</label>
+          <input id="ciA" type="range" min="0" max="50000" step="500" value="5000">
+          <span id="ciAV" class="badge">₹5,000</span>
+        </div>
+        <div class="ctrl">
+          <label>Annual Return (%)</label>
+          <input id="ciR" type="range" min="0" max="24" step="0.5" value="10">
+          <span id="ciRV" class="badge">10%</span>
+        </div>
+        <div class="ctrl">
+          <label>Years</label>
+          <input id="ciY" type="range" min="1" max="40" step="1" value="15">
+          <span id="ciYV" class="badge">15y</span>
+        </div>
+      </div>
+      <canvas id="ciChart" height="260"></canvas>
+      <p class="tip" id="ciNote" style="margin-top:8px"></p>
+    </div>
+
+    <div class="canvasCard">
+      <h3>Real vs Nominal Returns (Inflation Aware)</h3>
+      <div class="row">
+        <div class="ctrl">
+          <label>Nominal Return (%)</label>
+          <input id="rnNom" type="range" min="0" max="24" step="0.5" value="10">
+          <span id="rnNomV" class="badge">10%</span>
+        </div>
+        <div class="ctrl">
+          <label>Inflation (%)</label>
+          <input id="rnInf" type="range" min="0" max="15" step="0.5" value="5">
+          <span id="rnInfV" class="badge">5%</span>
+        </div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <div class="metric">
+          <span class="muted">Real Return (approx)</span>
+          <b id="realReturn">+4.76%</b>
+        </div>
+        <div class="metric">
+          <span class="muted">Time to Double (Rule of 72)</span>
+          <b id="ttd">~ 14.4 years</b>
+        </div>
+        <div class="metric">
+          <span class="muted">Signal</span>
+          <b id="signal" class="good">Beating inflation</b>
+        </div>
+      </div>
+      <canvas id="rnChart" height="220" style="margin-top:10px"></canvas>
+    </div>
+  </section>
+
+  <!-- PREPAY VS INVEST -->
+  <section id="decision" class="grid g-2" style="margin-top:18px">
+    <div class="canvasCard">
+      <h3>Prepay Loan vs Invest?</h3>
+      <div class="row">
+        <div class="ctrl">
+          <label>Loan APR (%)</label>
+          <input id="dvAPR" type="range" min="0" max="30" step="0.5" value="12">
+          <span id="dvAPRV" class="badge">12%</span>
+        </div>
+        <div class="ctrl">
+          <label>Expected Return (%)</label>
+          <input id="dvER" type="range" min="0" max="30" step="0.5" value="10">
+          <span id="dvERV" class="badge">10%</span>
+        </div>
+        <div class="ctrl">
+          <label>Inflation (%)</label>
+          <input id="dvINF" type="range" min="0" max="15" step="0.5" value="5">
+          <span id="dvINFV" class="badge">5%</span>
+        </div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <div class="metric">
+          <span class="muted">Real Cost of Debt</span>
+          <b id="realDebt">~ 6.67%</b>
+        </div>
+        <div class="metric">
+          <span class="muted">Real Expected Return</span>
+          <b id="realERet">~ 4.76%</b>
+        </div>
+        <div class="metric">
+          <span class="muted">Recommendation</span>
+          <b id="dvReco" class="good">Prepay looks better</b>
+        </div>
+      </div>
+      <p class="tip" id="dvNote" style="margin-top:6px"></p>
+      <canvas id="dvChart" height="200" style="margin-top:10px"></canvas>
+    </div>
+
+    <!-- BUDGET GAME -->
+    <div class="canvasCard">
+      <h3>Budget Allocator — Mini-Game (100 coins)</h3>
+      <p class="muted">Distribute 100 across categories. Aim for a strong emergency fund, healthy savings, and debt reduction.</p>
+      <div class="row">
+        <div class="ctrl"><label>Needs</label><input id="bNeeds" type="range" min="0" max="100" value="50"><span id="bNeedsV" class="badge">50</span></div>
+        <div class="ctrl"><label>Wants</label><input id="bWants" type="range" min="0" max="100" value="20"><span id="bWantsV" class="badge">20</span></div>
+        <div class="ctrl"><label>Savings</label><input id="bSave" type="range" min="0" max="100" value="20"><span id="bSaveV" class="badge">20</span></div>
+        <div class="ctrl"><label>Debt Paydown</label><input id="bDebt" type="range" min="0" max="100" value="10"><span id="bDebtV" class="badge">10</span></div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <div class="metric"><span class="muted">Total</span><b id="bTotal">100</b></div>
+        <div class="metric"><span class="muted">Score</span><b id="bScore" class="score good">A</b></div>
+        <div class="metric"><span class="muted">Hint</span><b id="bHint">Nice! Strong savings & debt focus.</b></div>
+      </div>
+      <canvas id="bChart" height="200" style="margin-top:10px"></canvas>
+      <p class="tip" style="margin-top:8px">💡 Aim for a baseline like <b>50/30/20</b> (Needs/Wants/Savings) and add extra to <b>Debt</b> if you carry high-interest loans.</p>
+    </div>
+  </section>
+
+  <footer>
+    Built for Hack the Economy · <a href="#">Back to Landing</a>
+  </footer>
+</div>
+
+<script>
+  // ---------- Utilities ----------
+  const fmtINR = (n) => "₹" + n.toLocaleString('en-IN');
+  const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+  const approxReal = (nom, inf) => ((1+nom/100)/(1+inf/100)-1)*100; // Fisher approx
+  const rule72 = (rate)=> rate>0 ? (72/rate) : Infinity;
+
+  // ---------- Hero chart ----------
+  const heroCtx = document.getElementById('heroChart');
+  const heroChart = new Chart(heroCtx, {
+    type:'line',
+    data:{
+      labels:Array.from({length:12},(_,i)=>`Y${i+1}`),
+      datasets:[{
+        label:'Wealth with Compounding',
+        data:Array.from({length:12},(_,i)=> 100 * Math.pow(1.1,i)),
+        tension:.35,
+        fill:true
+      }]
+    },
+    options:{
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(255,255,255,.08)'}}}
+    }
+  });
+
+  // ---------- Flow simulator ----------
+  const el = (id)=>document.getElementById(id);
+  const inc = el('inc'), tax = el('tax'), sav = el('sav');
+  const incV= el('incV'), taxV= el('taxV'), savV= el('savV');
+  const svg = el('flowSvg');
+
+  function setPath(id, x1,y1, x2,y2, curve=0){
+    const dx = (x2-x1), dy = (y2-y1);
+    const cx = x1 + dx/2, cy = y1 + dy/2 - curve;
+    svg.querySelector('#'+id).setAttribute('d', `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`);
+  }
+  function setLabel(id, x,y, text){ const t = svg.querySelector('#'+id); t.setAttribute('x', x); t.setAttribute('y', y); t.textContent = text; }
+  function setWidth(id, w){ svg.querySelector('#'+id).setAttribute('stroke-width', String(w)); }
+
+  function updateFlow(){
+    const income = Number(inc.value) * 1000; // ₹
+    const t = Number(tax.value)/100, s = Number(sav.value)/100;
+
+    incV.textContent = `₹${Number(inc.value).toLocaleString('en-IN')}k`;
+    taxV.textContent = `${tax.value}%`;
+    savV.textContent = `${sav.value}%`;
+
+    const taxes = income * t;
+    const afterTax = income - taxes;
+    const savings = afterTax * s;
+    const consumption = afterTax - savings;
+
+    // Simple closures: govt spends what it collects; banks invest a fraction (assume 90%) of savings
+    const govtSpend = taxes; // balanced for viz
+    const invest = savings * 0.9;
+
+    // Layout anchor points
+    const H = {x:160,y:100}, F={x:840,y:100}, G={x:160,y:260}, B={x:840,y:260};
+
+    // Paths + dynamic widths (scale stroke width to amounts)
+    const scale = (amt)=> clamp(4 + (amt/income)*18, 4, 26);
+
+    setPath('pWage', F.x-100, F.y+40, H.x+100, H.y+40, 40);
+    setLabel('lWage', 500, 75, `Wages: ${fmtINR(income)}`);
+    setWidth('pWage', scale(income));
+
+    setPath('pCons', H.x+100, H.y+60, F.x-100, F.y+60, -40);
+    setLabel('lCons', 500, 145, `Consumption: ${fmtINR(consumption)}`);
+    setWidth('pCons', scale(consumption));
+
+    setPath('pTax', H.x+40, H.y+80, G.x+80, G.y-10, 0);
+    setLabel('lTax', 240, 180, `Taxes: ${fmtINR(taxes)}`);
+    setWidth('pTax', scale(taxes));
+
+    setPath('pSav', H.x+120, H.y+80, B.x-120, B.y-10, -10);
+    setLabel('lSav', 500, 230, `Savings: ${fmtINR(savings)}`);
+    setWidth('pSav', scale(savings));
+
+    setPath('pG', G.x+100, G.y-10, F.x-100, F.y+90, -20);
+    setLabel('lG', 510, 305, `Govt Spend: ${fmtINR(govtSpend)}`);
+    setWidth('pG', scale(govtSpend));
+
+    setPath('pInv', B.x-100, B.y-10, F.x-100, F.y+80, 10);
+    setLabel('lInv', 760, 205, `Investment: ${fmtINR(invest)}`);
+    setWidth('pInv', scale(invest));
+
+    // Table
+    const rows = [
+      ['After-tax Income', afterTax, afterTax/income],
+      ['Consumption → Firms', consumption, consumption/income],
+      ['Savings → Banks', savings, savings/income],
+      ['Taxes → Government', taxes, taxes/income],
+      ['Govt Spending → Firms', govtSpend, govtSpend/income],
+      ['Bank Investment → Firms', invest, invest/income],
+    ];
+    const tb = document.querySelector('#flowTable tbody'); tb.innerHTML='';
+    rows.forEach(([k,v,s])=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${k}</td><td>${fmtINR(Math.round(v))}</td><td>${(s*100).toFixed(1)}%</td>`;
+      tb.appendChild(tr);
+    });
+    const tip = el('flowTip');
+    const saver = s>=0.2 ? 'great' : s>=0.1 ? 'okay' : 'low';
+    const taxpayer = t>=0.2 ? 'higher' : t>=0.1 ? 'moderate' : 'lower';
+    tip.innerHTML = `You’ve set a <b>${saver}</b> savings rate and <b>${taxpayer}</b> taxes. More savings increase bank investment → future production and wages.`;
+  }
+  ['inc','tax','sav'].forEach(id=> el(id).addEventListener('input', updateFlow));
+  updateFlow();
+
+  // ---------- Compound interest ----------
+  const ci = {
+    P: el('ciP'), A: el('ciA'), R: el('ciR'), Y: el('ciY'),
+    PV: el('ciPV'), AV: el('ciAV'), RV: el('ciRV'), YV: el('ciYV'),
+    note: el('ciNote')
+  };
+  const ciCtx = document.getElementById('ciChart');
+  let ciChart;
+  function calcCI(P, A, r, y){
+    // monthly compounding of annual rate r with monthly contrib A
+    const rm = r/100/12;
+    let bal = P, labels=[], data=[], principal=P, contrib=0, interest=0;
+    for(let yr=1; yr<=y; yr++){
+      for(let m=0; m<12; m++){
+        bal = bal*(1+rm) + A;
+        contrib += A;
+      }
+      labels.push('Y'+yr);
+      data.push(Math.round(bal));
+    }
+    interest = bal - P - contrib;
+    return {labels, data, total:bal, principal:P, contrib, interest};
+  }
+  function updateCI(){
+    ci.PV.textContent = fmtINR(Number(ci.P.value));
+    ci.AV.textContent = fmtINR(Number(ci.A.value));
+    ci.RV.textContent = `${ci.R.value}%`;
+    ci.YV.textContent = `${ci.Y.value}y`;
+    const res = calcCI(Number(ci.P.value), Number(ci.A.value), Number(ci.R.value), Number(ci.Y.value));
+    if(ciChart){ciChart.destroy();}
+    ciChart = new Chart(ciCtx,{
+      type:'bar',
+      data:{labels:res.labels, datasets:[{label:'Balance', data:res.data}]},
+      options:{plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}, y:{grid:{color:'rgba(255,255,255,.08)'}}}}
+    });
+    const shareInt = (res.interest/res.total)*100;
+    ci.note.innerHTML = `In ${ci.Y.value} years, you could have <b>${fmtINR(Math.round(res.total))}</b>. Of that, about <b>${fmtINR(Math.round(res.interest))}</b> (${shareInt.toFixed(1)}%) is compounding magic.`;
+  }
+  ['ciP','ciA','ciR','ciY'].forEach(id=> el(id).addEventListener('input', updateCI));
+  updateCI();
+
+  // ---------- Real vs nominal ----------
+  const rn = { nom:el('rnNom'), inf:el('rnInf'), nomV:el('rnNomV'), infV:el('rnInfV'),
+               rr:el('realReturn'), ttd:el('ttd'), sig:el('signal') };
+  const rnCtx = document.getElementById('rnChart');
+  let rnChart;
+  function updateRN(){
+    rn.nomV.textContent = `${rn.nom.value}%`;
+    rn.infV.textContent = `${rn.inf.value}%`;
+    const rr = approxReal(Number(rn.nom.value), Number(rn.inf.value));
+    rn.rr.textContent = `${rr>=0?'+':''}${rr.toFixed(2)}%`;
+    const ttd = rule72(Math.max(0.0001, rr));
+    rn.ttd.textContent = isFinite(ttd)? `~ ${ttd.toFixed(1)} years` : '∞';
+    rn.sig.textContent = rr>0 ? 'Beating inflation' : (rr===0 ? 'Just keeping up' : 'Losing purchasing power');
+    rn.sig.className = rr>0 ? 'good' : rr===0 ? 'warn' : 'bad';
+    // Chart value of ₹100 over 15 years: nominal vs real
+    const years = 15;
+    let nominal=[100], real=[100];
+    for(let i=1;i<=years;i++){
+      nominal.push(nominal[i-1]*(1+Number(rn.nom.value)/100));
+      real.push(real[i-1]*(1+rr/100));
+    }
+    if(rnChart) rnChart.destroy();
+    rnChart = new Chart(rnCtx,{
+      type:'line',
+      data:{labels:Array.from({length:years+1},(_,i)=>'Y'+i),
+        datasets:[{label:'Nominal ₹', data:nominal, fill:false, tension:.3},
+                  {label:'Real ₹ (today’s money)', data:real, fill:false, tension:.3}]},
+      options:{scales:{x:{grid:{display:false}}, y:{grid:{color:'rgba(255,255,255,.08)'}}}}
+    });
+  }
+  ['rnNom','rnInf'].forEach(id=> el(id).addEventListener('input', updateRN));
+  updateRN();
+
+  // ---------- Prepay vs invest ----------
+  const dv = { apr:el('dvAPR'), er:el('dvER'), inf:el('dvINF'),
+               aprV:el('dvAPRV'), erV:el('dvERV'), infV:el('dvINFV'),
+               realDebt:el('realDebt'), realER:el('realERet'), reco:el('dvReco'), note:el('dvNote') };
+  const dvCtx = document.getElementById('dvChart');
+  let dvChart;
+  function updateDV(){
+    dv.aprV.textContent = `${dv.apr.value}%`;
+    dv.erV.textContent  = `${dv.er.value}%`;
+    dv.infV.textContent = `${dv.inf.value}%`;
+    const rDebt = approxReal(Number(dv.apr.value), Number(dv.inf.value));
+    const rRet  = approxReal(Number(dv.er.value),  Number(dv.inf.value));
+    dv.realDebt.textContent = `${rDebt>=0?'+':''}${rDebt.toFixed(2)}%`;
+    dv.realER.textContent   = `${rRet>=0?'+':''}${rRet.toFixed(2)}%`;
+    const betterPrepay = rDebt > rRet;
+    dv.reco.textContent = betterPrepay ? 'Prepay looks better' : 'Invest looks better';
+    dv.reco.className = betterPrepay ? 'good' : 'good';
+    const gap = (betterPrepay ? rDebt - rRet : rRet - rDebt).toFixed(2);
+    dv.note.innerHTML = `Difference after inflation: <b>${gap}%</b>. Rule of thumb: choose the higher real rate. Also consider risk, liquidity, and fees.`;
+
+    if(dvChart) dvChart.destroy();
+    dvChart = new Chart(dvCtx,{
+      type:'bar',
+      data:{labels:['Real Cost of Debt','Real Expected Return'],
+        datasets:[{label:'%', data:[rDebt, rRet]}]},
+      options:{plugins:{legend:{display:false}},
+               scales:{x:{grid:{display:false}}, y:{grid:{color:'rgba(255,255,255,.08)'}}}}
+    });
+  }
+  ['dvAPR','dvER','dvINF'].forEach(id=> el(id).addEventListener('input', updateDV));
+  updateDV();
+
+  // ---------- Budget game ----------
+  const b = {
+    needs:el('bNeeds'), wants:el('bWants'), save:el('bSave'), debt:el('bDebt'),
+    nV:el('bNeedsV'), wV:el('bWantsV'), sV:el('bSaveV'), dV:el('bDebtV'),
+    total:el('bTotal'), score:el('bScore'), hint:el('bHint')
+  };
+  const bCtx = document.getElementById('bChart');
+  let bChart;
+  function scoreBudget(N,W,S,D){
+    const total = N+W+S+D;
+    const over = Math.abs(total-100);
+    // Base from alignment to 50/30/20 + bonus for debt > 0
+    let score = 100 - over*2;
+    score -= Math.abs(N-50)*0.7;
+    score -= Math.abs(W-30)*0.7;
+    score -= Math.abs(S-20)*0.7;
+    score += D*0.3; // encourage debt reduction
+    score = clamp(score,0,100);
+    let grade='C', color='warn', hint='Try moving closer to 50/30/20 and add to Debt if you carry high-interest loans.';
+    if(score>=85){grade='A'; color='good'; hint='Nice! Strong savings & debt focus.'}
+    else if(score>=70){grade='B'; color='good'; hint='Solid. Tweak toward 50/30/20 for an A.'}
+    else if(score>=55){grade='C'; color='warn';}
+    else {grade='D'; color='bad'; hint='You’re far from balanced. Boost Savings and Debt repayment.'}
+    return {score, grade, color, hint, total};
+  }
+  function updateBudget(){
+    const N=Number(b.needs.value), W=Number(b.wants.value), S=Number(b.save.value), D=Number(b.debt.value);
+    b.nV.textContent=N; b.wV.textContent=W; b.sV.textContent=S; b.dV.textContent=D;
+    const {score, grade, color, hint, total} = scoreBudget(N,W,S,D);
+    b.total.textContent=total;
+    b.score.textContent=grade;
+    b.score.className = 'score ' + color;
+    b.hint.textContent = hint;
+    if(bChart) bChart.destroy();
+    bChart = new Chart(bCtx,{
+      type:'doughnut',
+      data:{labels:['Needs','Wants','Savings','Debt'],
+            datasets:[{data:[N,W,S,D]}]},
+      options:{plugins:{legend:{position:'bottom'}}}
+    });
+  }
+  ['bNeeds','bWants','bSave','bDebt'].forEach(id=> el(id).addEventListener('input', updateBudget));
+  updateBudget();
+</script>
+</body>
+</html>

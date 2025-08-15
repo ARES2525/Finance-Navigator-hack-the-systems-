@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Build Financial Literacy — Finance Navigator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0b1020;--panel:#121933;--panel2:#0f1430;--text:#f5f7ff;--muted:#96a0c8;--accent:#6aa9ff;
+    --good:#3bd671;--warn:#ffcc66;--bad:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,var(--bg),#0a0f26 60%,#0a0f26);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,sans-serif}
+  header{position:sticky;top:0;z-index:30;background:rgba(18,25,51,.9);backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;padding:12px 18px}
+  header h1{margin:0;font-size:18px;color:var(--accent);font-weight:800}
+  .pill{font-size:12px;color:var(--muted);background:#0d1638;border:1px solid rgba(255,255,255,.08);padding:6px 10px;border-radius:999px}
+  .wrap{max-width:1200px;margin:20px auto;padding:0 16px}
+  .grid{display:grid;gap:16px}
+  .g-2{grid-template-columns:1fr 1fr}
+  .g-3{grid-template-columns:repeat(3,1fr)}
+  @media (max-width:1000px){.g-2,.g-3{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  h2{font-size:26px;margin:0 0 6px}
+  h3{font-size:18px;margin:0 0 8px}
+  p.muted{color:var(--muted);margin:0 0 10px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .ctrl{background:var(--panel2);border:1px solid rgba(255,255,255,.08);padding:10px;border-radius:12px;display:flex;gap:10px;align-items:center;flex:1;min-width:220px}
+  .ctrl label{min-width:130px;font-size:12px;color:var(--muted)}
+  .ctrl input[type="number"], .ctrl input[type="text"]{flex:1;min-width:80px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:#0c1330;color:var(--text)}
+  .ctrl input[type="range"]{flex:1}
+  .badge{font-size:12px;background:#0d1638;border:1px solid rgba(255,255,255,.08);color:var(--muted);padding:4px 8px;border-radius:999px;white-space:nowrap}
+  .metric{background:#0d1431;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:2px;min-width:140px}
+  .metric b{font-size:18px}
+  .good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+  .btn{background:var(--accent);color:#081022;border:none;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer}
+  .btn.ghost{background:#18224a;color:var(--text);border:1px solid rgba(255,255,255,.12)}
+  .table{width:100%;border-collapse:collapse;font-size:13px}
+  .table th,.table td{padding:8px;border-bottom:1px solid rgba(255,255,255,.06);text-align:left}
+  .chip{background:#0d1638;border:1px solid rgba(255,255,255,.08);padding:6px 10px;border-radius:999px;color:var(--muted);font-size:12px}
+  .hr{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);margin:10px 0}
+  .scoreBadge{font-weight:800}
+  .tip{font-size:12px;color:var(--muted)}
+  .inlineHint{font-size:12px;color:var(--muted);margin-left:auto}
+  .list{margin:6px 0 0 16px;color:var(--muted);font-size:13px}
+  .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#0c1330;border:1px solid rgba(255,255,255,.12);padding:2px 6px;border-radius:6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Build Financial Literacy</h1>
+  <div class="pill">Part of <b style="color:var(--accent)">&nbsp;Finance Navigator</b></div>
+</header>
+
+<div class="wrap grid g-2">
+  <!-- INTRO -->
+  <section class="card">
+    <h2>Master the money basics — interactively</h2>
+    <p class="muted">Simulators, visual explainers, and quick quizzes to help you budget, save, invest, decode your paycheck, and defeat debt.</p>
+    <div class="row">
+      <span class="chip">Actionable tips</span>
+      <span class="chip">Visual charts</span>
+      <span class="chip">Bite-size learning</span>
+      <span class="chip">Mini-games</span>
+    </div>
+  </section>
+
+  <!-- CREDIT SCORE COACH -->
+  <section class="card">
+    <h3>Credit Score Coach</h3>
+    <p class="muted">Move the sliders to simulate how habits influence a (FICO-style) score.</p>
+    <div class="row">
+      <div class="ctrl"><label>Payment History</label><input id="csPay" type="range" min="0" max="100" value="95"><span id="csPayV" class="badge">95%</span></div>
+      <div class="ctrl"><label>Utilization (lower=better)</label><input id="csUtil" type="range" min="0" max="100" value="20"><span id="csUtilV" class="badge">20%</span></div>
+      <div class="ctrl"><label>Age of Credit (yrs)</label><input id="csAge" type="range" min="0" max="25" value="5"><span id="csAgeV" class="badge">5y</span></div>
+      <div class="ctrl"><label>Account Mix</label><input id="csMix" type="range" min="0" max="100" value="60"><span id="csMixV" class="badge">60</span></div>
+      <div class="ctrl"><label>New Inquiries (12m)</label><input id="csInq" type="range" min="0" max="8" value="1"><span id="csInqV" class="badge">1</span></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div class="metric"><span class="muted">Estimated Score</span><b id="csScore">760</b></div>
+      <div class="metric"><span class="muted">Signal</span><b id="csSignal" class="good">Excellent</b></div>
+      <div class="metric"><span class="muted">Top Tip</span><b id="csTip">Keep utilization &lt; 30%.</b></div>
+      <span class="inlineHint">Weights: Payment 35%, Util 30%, Age 15%, Mix 10%, New 10%</span>
+    </div>
+    <canvas id="csChart" height="190" style="margin-top:8px"></canvas>
+  </section>
+
+  <!-- EMERGENCY FUND PLANNER -->
+  <section class="card">
+    <h3>Emergency Fund Planner</h3>
+    <p class="muted">How many months of expenses do you have covered?</p>
+    <div class="row">
+      <div class="ctrl"><label>Monthly Expenses (₹)</label><input id="efExp" type="number" min="0" value="45000"></div>
+      <div class="ctrl"><label>Current Savings (₹)</label><input id="efSav" type="number" min="0" value="90000"></div>
+      <div class="ctrl"><label>Monthly Contribution (₹)</label><input id="efCon" type="number" min="0" value="10000"></div>
+      <div class="ctrl"><label>Target Months</label><input id="efTarget" type="range" min="1" max="12" value="6"><span id="efTargetV" class="badge">6 mo</span></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div class="metric"><span class="muted">Months Covered</span><b id="efCovered">2.0</b></div>
+      <div class="metric"><span class="muted">Time to Target</span><b id="efETA">—</b></div>
+      <div class="metric"><span class="muted">Status</span><b id="efStatus" class="warn">Work in progress</b></div>
+    </div>
+    <canvas id="efChart" height="190" style="margin-top:8px"></canvas>
+    <p class="tip" id="efTip" style="margin-top:6px"></p>
+  </section>
+
+  <!-- 50/30/20 COACH -->
+  <section class="card">
+    <h3>Budget Coach (50/30/20)</h3>
+    <p class="muted">Allocate your monthly take-home and get instant feedback.</p>
+    <div class="row">
+      <div class="ctrl"><label>Monthly Income (₹)</label><input id="bcInc" type="number" value="100000"></div>
+      <div class="ctrl"><label>Needs (₹)</label><input id="bcNeeds" type="number" value="50000"></div>
+      <div class="ctrl"><label>Wants (₹)</label><input id="bcWants" type="number" value="30000"></div>
+      <div class="ctrl"><label>Savings (₹)</label><input id="bcSavings" type="number" value="20000"></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div class="metric"><span class="muted">Score</span><b id="bcScore" class="good">A</b></div>
+      <div class="metric"><span class="muted">Hint</span><b id="bcHint">Great alignment</b></div>
+    </div>
+    <canvas id="bcChart" height="190" style="margin-top:8px"></canvas>
+    <p class="tip">Baseline: Needs 50%, Wants 30%, Savings 20%. Adjust for debt, goals, and city costs.</p>
+  </section>
+
+  <!-- PAYCHECK DECODER -->
+  <section class="card">
+    <h3>Paycheck Decoder</h3>
+    <p class="muted">Understand your payslip: where does your money go?</p>
+    <div class="row">
+      <div class="ctrl"><label>Gross Salary (₹/month)</label><input id="pdGross" type="number" value="150000"></div>
+      <div class="ctrl"><label>Tax (%)</label><input id="pdTax" type="range" min="0" max="40" value="15"><span id="pdTaxV" class="badge">15%</span></div>
+      <div class="ctrl"><label>Retirement/PF (%)</label><input id="pdPF" type="range" min="0" max="20" value="12"><span id="pdPFV" class="badge">12%</span></div>
+      <div class="ctrl"><label>Insurance (%)</label><input id="pdIns" type="range" min="0" max="10" value="2"><span id="pdInsV" class="badge">2%</span></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div class="metric"><span class="muted">Take-Home</span><b id="pdNet">₹—</b></div>
+      <div class="metric"><span class="muted">Savings Rate</span><b id="pdSavRate">—</b></div>
+      <div class="metric"><span class="muted">Signal</span><b id="pdSignal" class="good">—</b></div>
+    </div>
+    <canvas id="pdChart" height="190" style="margin-top:8px"></canvas>
+    <table class="table" id="pdTable" aria-label="paycheck breakdown" style="margin-top:8px">
+      <thead><tr><th>Component</th><th>Amount (₹)</th><th>Share</th></tr></thead><tbody></tbody>
+    </table>
+  </section>
+
+  <!-- DEBT STRATEGY LAB -->
+  <section class="card">
+    <h3>Debt Strategy Lab — Snowball vs Avalanche</h3>
+    <p class="muted">Enter debts below. We’ll simulate months to payoff and total interest with each method.</p>
+    <div class="row">
+      <div class="ctrl"><label>Extra Payment (₹/mo)</label><input id="dlExtra" type="number" value="5000"></div>
+      <button class="btn" id="dlAdd">+ Add Debt</button>
+      <span class="inlineHint">Methods: Snowball (smallest balance first) vs Avalanche (highest APR first)</span>
+    </div>
+    <table class="table" id="dlTable" style="margin-top:8px">
+      <thead><tr><th>Debt</th><th>Balance (₹)</th><th>APR %</th><th>Min (₹)</th><th>Actions</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="dlRun">Run Simulation</button>
+      <button class="btn ghost" id="dlSeed">Load Sample Debts</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div class="metric"><span class="muted">Snowball</span><b id="dlSnow">—</b></div>
+      <div class="metric"><span class="muted">Avalanche</span><b id="dlAval">—</b></div>
+      <div class="metric"><span class="muted">Best Pick</span><b id="dlPick" class="good">—</b></div>
+    </div>
+    <canvas id="dlChart" height="200" style="margin-top:8px"></canvas>
+    <p class="tip" id="dlTip" style="margin-top:6px"></p>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="card">
+    <h3>Quick Quiz — Level Up Your Money IQ</h3>
+    <p class="muted">7 bite-size questions. Instant feedback, no pressure.</p>
+    <div id="quizBox" class="grid"></div>
+    <div class="hr"></div>
+    <div class="row">
+      <div class="metric"><span class="muted">Score</span><b id="qScore" class="scoreBadge">0 / 7</b></div>
+      <button class="btn" id="qReset">Reset Quiz</button>
+    </div>
+  </section>
+
+  <!-- SCAM SPOTTER MINI-GAME -->
+  <section class="card">
+    <h3>Scam Spotter — Real or Fraud?</h3>
+    <p class="muted">Identify the red flags before you click.</p>
+    <div class="row" id="scamBox"></div>
+    <div class="row" style="margin-top:8px">
+      <div class="metric"><span class="muted">Streak</span><b id="scStreak">0</b></div>
+      <div class="metric"><span class="muted">Best</span><b id="scBest">0</b></div>
+      <button class="btn" id="scNext">Next Scenario</button>
+    </div>
+    <p class="tip" id="scTip" style="margin-top:6px"></p>
+  </section>
+
+</div>
+
+<script>
+  const fmtINR = (n)=>"₹"+Number(n).toLocaleString('en-IN');
+
+  /* ========== CREDIT SCORE COACH ========== */
+  const cs = {
+    pay:document.getElementById('csPay'),
+    util:document.getElementById('csUtil'),
+    age:document.getElementById('csAge'),
+    mix:document.getElementById('csMix'),
+    inq:document.getElementById('csInq'),
+    payV:document.getElementById('csPayV'),
+    utilV:document.getElementById('csUtilV'),
+    ageV:document.getElementById('csAgeV'),
+    mixV:document.getElementById('csMixV'),
+    inqV:document.getElementById('csInqV'),
+    score:document.getElementById('csScore'),
+    signal:document.getElementById('csSignal'),
+    tip:document.getElementById('csTip')
+  };
+  const csCtx = document.getElementById('csChart'); let csChart;
+  function calcScore(p, u, a, m, q){
+    // Map utilization + inquiries inversely
+    const utilScore = 100 - Math.min(100,u);
+    const inqScore = 100 - Math.min(100, q*12.5); // 0->100, 8->0
+    // Weighted FICO-style
+    const raw = 0.35*p + 0.30*utilScore + 0.15*(a/25*100) + 0.10*m + 0.10*inqScore; // 0-100
+    // Scale to 300-850
+    const scaled = Math.round(300 + (raw/100)*(850-300));
+    return {raw, scaled, utilScore, inqScore};
+  }
+  function csUpdate(){
+    cs.payV.textContent = cs.pay.value+'%';
+    cs.utilV.textContent = cs.util.value+'%';
+    cs.ageV.textContent = cs.age.value+'y';
+    cs.mixV.textContent = cs.mix.value;
+    cs.inqV.textContent = cs.inq.value;
+
+    const {raw, scaled, utilScore, inqScore} = calcScore(
+      Number(cs.pay.value), Number(cs.util.value), Number(cs.age.value), Number(cs.mix.value), Number(cs.inq.value)
+    );
+    cs.score.textContent = scaled;
+    let sig='Fair', cls='warn';
+    if(scaled>=800){sig='Exceptional';cls='good'}
+    else if(scaled>=740){sig='Very Good';cls='good'}
+    else if(scaled>=670){sig='Good';cls='good'}
+    else if(scaled>=580){sig='Fair';cls='warn'}
+    else {sig='Poor';cls='bad'}
+    cs.signal.textContent = sig; cs.signal.className = cls;
+
+    const tips=[];
+    if(Number(cs.util.value)>30) tips.push('Lower utilization below 30%');
+    if(Number(cs.pay.value)<99) tips.push('Never miss a due date');
+    if(Number(cs.inq.value)>2) tips.push('Minimize new credit applications');
+    if(Number(cs.age.value)<3) tips.push('Keep old accounts open to age history');
+    if(Number(cs.mix.value)<50) tips.push('Diversify mix (only if needed)');
+    cs.tip.textContent = tips[0] || 'Keep utilization < 30% and pay on time.';
+
+    const parts = [0.35*Number(cs.pay.value), 0.30*utilScore, 0.15*(Number(cs.age.value)/25*100), 0.10*Number(cs.mix.value), 0.10*inqScore];
+    if(csChart) csChart.destroy();
+    csChart = new Chart(csCtx, {
+      type:'doughnut',
+      data:{labels:['Payment','Utilization','Age','Mix','New Credit'], datasets:[{data:parts}]},
+      options:{plugins:{legend:{position:'bottom'}}}
+    });
+  }
+  ['csPay','csUtil','csAge','csMix','csInq'].forEach(id=>document.getElementById(id).addEventListener('input', csUpdate));
+  csUpdate();
+
+  /* ========== EMERGENCY FUND PLANNER ========== */
+  const ef = {
+    exp:document.getElementById('efExp'), sav:document.getElementById('efSav'), con:document.getElementById('efCon'),
+    target:document.getElementById('efTarget'), targetV:document.getElementById('efTargetV'),
+    covered:document.getElementById('efCovered'), eta:document.getElementById('efETA'), status:document.getElementById('efStatus'),
+    tip:document.getElementById('efTip')
+  };
+  const efCtx = document.getElementById('efChart'); let efChart;
+  function efUpdate(){
+    ef.targetV.textContent = ef.target.value + ' mo';
+    const exp = Number(ef.exp.value)||0, sav=Number(ef.sav.value)||0, con=Number(ef.con.value)||0, tgt=Number(ef.target.value);
+    const covered = exp>0 ? sav/exp : 0;
+    ef.covered.textContent = covered.toFixed(1);
+    let months = '—';
+    if(exp>0 && con>0){
+      const need = Math.max(0, tgt*exp - sav);
+      months = need===0 ? 'Ready' : Math.ceil(need/con) + ' mo';
+    }
+    ef.eta.textContent = months;
+    let cls='warn', text='Work in progress';
+    if(covered>=tgt){cls='good'; text='Target achieved'}
+    else if(covered>=tgt/2){cls='warn'; text='More than halfway'}
+    else {cls='bad'; text='Build your cushion'}
+    ef.status.textContent = text; ef.status.className = cls;
+
+    // Project for 12 months
+    let labels=[], data=[];
+    let bal=sav;
+    for(let i=0;i<=12;i++){
+      labels.push('M'+i);
+      data.push(Math.round(bal));
+      bal += con;
+    }
+    if(efChart) efChart.destroy();
+    efChart = new Chart(efCtx, {
+      type:'line',
+      data:{labels, datasets:[{label:'Savings', data, tension:.35, fill:true}]},
+      options:{plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}, y:{grid:{color:'rgba(255,255,255,.08)'}}}}
+    });
+
+    ef.tip.innerHTML = `Target: <b>${tgt}</b> months = <b>${fmtINR(tgt*exp)}</b>. Add <span class="kbd">${fmtINR(con)}</span>/mo → goal in <b>${months}</b>. Automate transfers on salary day.`;
+  }
+  ['efExp','efSav','efCon','efTarget'].forEach(id=>document.getElementById(id).addEventListener('input', efUpdate));
+  efUpdate();
+
+  /* ========== 50/30/20 COACH ========== */
+  const bc = {
+    inc:document.getElementById('bcInc'), n:document.getElementById('bcNeeds'),
+    w:document.getElementById('bcWants'), s:document.getElementById('bcSavings'),
+    score:document.getElementById('bcScore'), hint:document.getElementById('bcHint')
+  };
+  const bcCtx = document.getElementById('bcChart'); let bcChart;
+  function bcUpdate(){
+    const inc=Number(bc.inc.value)||0, n=Number(bc.n.value)||0, w=Number(bc.w.value)||0, s=Number(bc.s.value)||0;
+    const tot = n+w+s, over = Math.abs(tot-inc);
+    let score = 100 - (over/inc)*100;
+    const nPct = inc? n/inc*100 : 0, wPct=inc? w/inc*100 : 0, sPct=inc? s/inc*100 : 0;
+    score -= Math.abs(nPct-50)*0.7 + Math.abs(wPct-30)*0.7 + Math.abs(sPct-20)*0.7;
+    score = Math.max(0, Math.min(100, score));
+    let grade='C', cls='warn', hint='Steer toward 50/30/20 and keep total within income.';
+    if(score>=85){grade='A';cls='good';hint='Great alignment!'}
+    else if(score>=70){grade='B';cls='good';hint='Almost there. Small tweaks for an A.'}
+    else if(score<55){grade='D';cls='bad';hint='Revamp. Cut wants and boost savings.'}
+    bc.score.textContent = grade; bc.score.className = cls; bc.hint.textContent = hint;
+
+    if(bcChart) bcChart.destroy();
+    bcChart = new Chart(bcCtx, {
+      type:'bar',
+      data:{labels:['Needs','Wants','Savings'], datasets:[{label:'₹', data:[n,w,s]}]},
+      options:{plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}, y:{grid:{color:'rgba(255,255,255,.08)'}}}}
+    });
+  }
+  ['bcInc','bcNeeds','bcWants','bcSavings'].forEach(id=>document.getElementById(id).addEventListener('input', bcUpdate));
+  bcUpdate();
+
+  /* ========== PAYCHECK DECODER ========== */
+  const pd = {
+    gross:document.getElementById('pdGross'), tax:document.getElementById('pdTax'), pf:document.getElementById('pdPF'), ins:document.getElementById('pdIns'),
+    taxV:document.getElementById('pdTaxV'), pfV:document.getElementById('pdPFV'), insV:document.getElementById('pdInsV'),
+    net:document.getElementById('pdNet'), savRate:document.getElementById('pdSavRate'), sig:document.getElementById('pdSignal'),
+    table:document.getElementById('pdTable').querySelector('tbody')
+  };
+  const pdCtx = document.getElementById('pdChart'); let pdChart;
+  function pdUpdate(){
+    pd.taxV.textContent = pd.tax.value + '%';
+    pd.pfV.textContent = pd.pf.value + '%';
+    pd.insV.textContent = pd.ins.value + '%';
+    const g=Number(pd.gross.value)||0, tax=g*Number(pd.tax.value)/100, pf=g*Number(pd.pf.value)/100, ins=g*Number(pd.ins.value)/100;
+    const net = g - tax - pf - ins;
+    pd.net.textContent = fmtINR(net);
+    const savR = g? (pf/g*100) : 0;
+    pd.savRate.textContent = savR.toFixed(1)+'%';
+    pd.sig.textContent = net/g>0.6 ? 'Healthy take-home' : 'High deductions';
+    pd.sig.className = net/g>0.6 ? 'good' : 'warn';
+    const rows = [
+      ['Gross', g, '100%'], ['Tax', tax, ((tax/g)*100).toFixed(1)+'%'], ['Retirement/PF', pf, ((pf/g)*100).toFixed(1)+'%'],
+      ['Insurance', ins, ((ins/g)*100).toFixed(1)+'%'], ['Take-Home', net, ((net/g)*100).toFixed(1)+'%']
+    ];
+    pd.table.innerHTML=''; rows.forEach(r=>{const tr=document.createElement('tr'); tr.innerHTML=`<td>${r[0]}</td><td>${fmtINR(Math.round(r[1]))}</td><td>${r[2]}</td>`; pd.table.appendChild(tr);});
+    if(pdChart) pdChart.destroy();
+    pdChart = new Chart(pdCtx, {
+      type:'pie',
+      data:{labels:['Tax','PF','Insurance','Net'], datasets:[{data:[tax,pf,ins,net]}]},
+      options:{plugins:{legend:{position:'bottom'}}}
+    });
+  }
+  ['pdGross','pdTax','pdPF','pdIns'].forEach(id=>document.getElementById(id).addEventListener('input', pdUpdate));
+  pdUpdate();
+
+  /* ========== DEBT STRATEGY LAB ========== */
+  const dl = {
+    extra:document.getElementById('dlExtra'),
+    table:document.getElementById('dlTable').querySelector('tbody'),
+    addBtn:document.getElementById('dlAdd'),
+    runBtn:document.getElementById('dlRun'),
+    seedBtn:document.getElementById('dlSeed'),
+    snow:document.getElementById('dlSnow'),
+    aval:document.getElementById('dlAval'),
+    pick:document.getElementById('dlPick'),
+    tip:document.getElementById('dlTip')
+  };
+  let debts = [];
+  function renderDebts(){
+    dl.table.innerHTML='';
+    debts.forEach((d,i)=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="text" value="${d.name}" data-i="${i}" data-k="name" class="inline"></td>
+        <td><input type="number" value="${d.balance}" data-i="${i}" data-k="balance" class="inline"></td>
+        <td><input type="number" value="${d.apr}" data-i="${i}" data-k="apr" class="inline"></td>
+        <td><input type="number" value="${d.min}" data-i="${i}" data-k="min" class="inline"></td>
+        <td><button class="btn ghost" data-i="${i}" data-act="del">Delete</button></td>`;
+      dl.table.appendChild(tr);
+    });
+    dl.table.querySelectorAll('input.inline').forEach(inp=>{
+      inp.style.width='100%'; inp.style.background='#0c1330'; inp.style.color='var(--text)'; inp.style.border='1px solid rgba(255,255,255,.12)'; inp.style.borderRadius='8px'; inp.style.padding='6px';
+      inp.addEventListener('input', e=>{
+        const i=Number(e.target.dataset.i), k=e.target.dataset.k;
+        debts[i][k] = k==='name'? e.target.value : Number(e.target.value);
+      });
+    });
+    dl.table.querySelectorAll('button[data-act="del"]').forEach(btn=>{
+      btn.addEventListener('click', e=>{
+        const i=Number(e.target.dataset.i); debts.splice(i,1); renderDebts();
+      });
+    });
+  }
+  dl.addBtn.addEventListener('click', ()=>{
+    debts.push({name:'Debt '+(debts.length+1), balance:30000, apr:20, min:1500});
+    renderDebts();
+  });
+  dl.seedBtn.addEventListener('click', ()=>{
+    debts = [
+      {name:'Card A', balance:45000, apr:28, min:1800},
+      {name:'Card B', balance:25000, apr:36, min:1200},
+      {name:'Loan C', balance:90000, apr:12, min:3000}
+    ];
+    renderDebts();
+  });
+
+  function simulate(method){
+    // Deep copy
+    let ds = debts.map(d=>({...d, bal:d.balance}));
+    let months=0, totalInterest=0, timeline=[{label:'Start', debts:ds.map(d=>d.bal)}];
+    const extra = Number(dl.extra.value)||0;
+
+    while(ds.some(d=>d.bal>1) && months<600){
+      months++;
+      // Order debts
+      if(method==='snowball') ds.sort((a,b)=>a.bal-b.bal);
+      if(method==='avalanche') ds.sort((a,b)=>b.apr-a.apr);
+
+      // Interest accrual monthly
+      ds.forEach(d=>{
+        const r=d.apr/100/12;
+        const int = d.bal*r;
+        d.bal += int;
+        totalInterest += int;
+      });
+
+      // Pay minimums
+      let extraPool = extra;
+      ds.forEach(d=>{
+        if(d.bal<=0) return;
+        const pay = Math.min(d.min, d.bal);
+        d.bal -= pay;
+      });
+
+      // Add extra to target debt
+      const target = ds.find(d=>d.bal>0);
+      if(target){
+        const pay = Math.min(extraPool, target.bal);
+        target.bal -= pay;
+        extraPool -= pay;
+      }
+
+      // Reallocate freed minimums
+      ds.forEach((d,idx)=>{
+        if(d.bal<=0 && d.min>0){
+          const t = ds.find(x=>x.bal>0);
+          if(t) t.bal -= Math.min(d.min, t.bal);
+          d.min = 0;
+        }
+      });
+
+      if(months%3===0 || !ds.some(d=>d.bal>0)) timeline.push({label:'M'+months, debts:ds.map(d=>Math.max(0,Math.round(d.bal)))});
+    }
+    return {months, totalInterest:Math.round(totalInterest), timeline};
+  }
+  const dlCtx = document.getElementById('dlChart'); let dlChart;
+  dl.runBtn.addEventListener('click', ()=>{
+    if(debts.length===0){dl.tip.textContent='Add at least one debt.'; return;}
+    const snow = simulate('snowball'), aval = simulate('avalanche');
+    dl.snow.textContent = `${snow.months} mo, ${fmtINR(snow.totalInterest)} interest`;
+    dl.aval.textContent = `${aval.months} mo, ${fmtINR(aval.totalInterest)} interest`;
+    let pick='Avalanche (saves interest)', cls='good';
+    if(snow.months<aval.months-1){pick='Snowball (faster wins)';}
+    dl.pick.textContent = pick; dl.pick.className = cls;
+
+    // Chart: total remaining balance over time (coarse points)
+    if(dlChart) dlChart.destroy();
+    const labels = Array.from(new Set([...snow.timeline.map(t=>t.label), ...aval.timeline.map(t=>t.label)])).sort((a,b)=>{
+      const na=Number(a.replace('M','').replace('Start','0')); const nb=Number(b.replace('M','').replace('Start','0')); return na-nb;
+    });
+    function sumAt(tl, label){
+      const found = tl.find(t=>t.label===label);
+      return found ? found.debts.reduce((s,x)=>s+x,0) : null;
+    }
+    const snowSeries = labels.map(l=>sumAt(snow.timeline,l)).map(v=>v===null?null:v);
+    const avalSeries = labels.map(l=>sumAt(aval.timeline,l)).map(v=>v===null?null:v);
+    dlChart = new Chart(dlCtx, {
+      type:'line',
+      data:{labels, datasets:[
+        {label:'Snowball', data:snowSeries, spanGaps:true, tension:.25},
+        {label:'Avalanche', data:avalSeries, spanGaps:true, tension:.25}
+      ]},
+      options:{scales:{x:{grid:{display:false}}, y:{grid:{color:'rgba(255,255,255,.08)'}}}}
+    });
+
+    dl.tip.innerHTML = `Snowball builds <b>motivation</b> by quick wins. Avalanche maximizes <b>interest savings</b>. Choose what helps you stick with the plan.`;
+  });
+
+  /* ========== QUIZ ========== */
+  const quizQ = [
+    {q:'Which is best for an emergency fund?', a:['High-yield savings','Crypto wallet','Long-term equity fund'], c:0},
+    {q:'If inflation is 6% and your deposit earns 5%, your real return is…', a:['+1%','0%','-1%'], c:2},
+    {q:'Good credit utilization is typically…', a:['< 30%','~ 60%','> 80%'], c:0},
+    {q:'Which comes first?', a:['Investing','Emergency fund','Luxury upgrade'], c:1},
+    {q:'Which debt to attack first in Avalanche?', a:['Lowest APR','Highest APR','Largest balance'], c:1},
+    {q:'Best way to build consistency?', a:['Time the market','Automate contributions','Wait for salary hikes'], c:1},
+    {q:'50/30/20 refers to…', a:['Tax brackets','Budget rule','Loan types'], c:1}
+  ];
+  const quizBox = document.getElementById('quizBox'); const qScore = document.getElementById('qScore'); const qReset = document.getElementById('qReset');
+  let quizAns = Array(quizQ.length).fill(null);
+  function renderQuiz(){
+    quizBox.innerHTML='';
+    quizQ.forEach((item, i)=>{
+      const card = document.createElement('div'); card.className='card';
+      const head = document.createElement('div'); head.innerHTML = `<b>Q${i+1}.</b> ${item.q}`; head.style.marginBottom='6px';
+      card.appendChild(head);
+      const opts = document.createElement('div'); opts.className='row';
+      item.a.forEach((opt, j)=>{
+        const btn = document.createElement('button'); btn.className='btn ghost'; btn.textContent=opt; btn.style.flex='1';
+        btn.addEventListener('click', ()=>{
+          quizAns[i]=j;
+          Array.from(opts.children).forEach(b=>{b.className='btn ghost'; b.style.opacity='.8';});
+          btn.className = 'btn';
+          btn.style.opacity='1';
+          updateScore();
+        });
+        opts.appendChild(btn);
+      });
+      card.appendChild(opts);
+      quizBox.appendChild(card);
+    });
+  }
+  function updateScore(){
+    let s=0; quizAns.forEach((a,i)=>{ if(a===quizQ[i].c) s++; });
+    qScore.textContent = `${s} / ${quizQ.length}`;
+  }
+  qReset.addEventListener('click', ()=>{quizAns = Array(quizQ.length).fill(null); renderQuiz(); updateScore();});
+  renderQuiz(); updateScore();
+
+  /* ========== SCAM SPOTTER ========== */
+  const scamBox = document.getElementById('scamBox'); const scStreak=document.getElementById('scStreak'); const scBest=document.getElementById('scBest'); const scNext=document.getElementById('scNext'); const scTip=document.getElementById('scTip');
+  const scenarios = [
+    {text:'Bank SMS: "URGENT! Your KYC is expired. Click http://kyc-update.bank-verify.info immediately."', fraud:true, hint:'Lookalike domain + urgency + link → scam.'},
+    {text:'UPI request from a buyer asking you to "approve to receive money".', fraud:true, hint:'Receiving money never requires you to approve a debit request.'},
+    {text:'Email from HR on your company domain asking you to update tax declaration via intranet.', fraud:false, hint:'Verify sender and internal portal URL.'},
+    {text:'Lottery email: "You won ₹50,00,000. Send ID and bank details."', fraud:true, hint:'Unsolicited prize + sensitive info = scam.'},
+    {text:'Payment app asks for PIN at merchant checkout.', fraud:false, hint:'Legit at POS — ensure machine is official.'},
+    {text:'Caller claims to be from income tax, threatens arrest if you don’t pay now via gift cards.', fraud:true, hint:'Threat + gift cards = guaranteed scam.'}
+  ];
+  let streak=0, best=0, cur=0;
+  function loadScenario(){
+    cur = Math.floor(Math.random()*scenarios.length);
+    scamBox.innerHTML='';
+    const box = document.createElement('div');
+    box.className='card';
+    box.innerHTML = `<p class="muted">${scenarios[cur].text}</p>`;
+    const row = document.createElement('div'); row.className='row'; row.style.marginTop='8px';
+    const realBtn = document.createElement('button'); realBtn.className='btn ghost'; realBtn.textContent='Looks Legit';
+    const fraudBtn = document.createElement('button'); fraudBtn.className='btn ghost'; fraudBtn.textContent='Looks Fraudulent';
+    const judge = (pickFraud)=>{
+      const correct = (pickFraud === scenarios[cur].fraud);
+      streak = correct ? streak+1 : 0;
+      best = Math.max(best, streak);
+      scStreak.textContent = streak; scBest.textContent = best;
+      scTip.innerHTML = (correct? '✅ Correct. ' : '❌ Oops. ') + scenarios[cur].hint;
+      realBtn.className = 'btn ' + (scenarios[cur].fraud? 'ghost':'');
+      fraudBtn.className = 'btn ' + (scenarios[cur].fraud? '':'ghost');
+    };
+    realBtn.addEventListener('click', ()=>judge(false));
+    fraudBtn.addEventListener('click', ()=>judge(true));
+    row.appendChild(realBtn); row.appendChild(fraudBtn); box.appendChild(row); scamBox.appendChild(box);
+  }
+  scNext.addEventListener('click', loadScenario);
+  loadScenario();
+</script>
+</body>
+</html>

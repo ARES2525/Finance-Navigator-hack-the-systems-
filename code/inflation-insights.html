@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Inflation Insights — Finance Navigator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#071025; --card:#0f1830; --muted:#9fb0d8; --accent:#57a6ff; --accent-2:#7ef0ff; --good:#34d399; --warn:#ffd86b; --bad:#ff7b7b; --glass: rgba(255,255,255,0.03);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,var(--bg),#051022 75%);color:#e9f1ff;min-height:100vh;padding:20px}
+  .container{max-width:1100px;margin:0 auto}
+  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+  header h1{margin:0;font-size:20px;color:var(--accent);font-weight:800}
+  header p{margin:0;color:var(--muted);font-size:13px}
+  .grid{display:grid;gap:16px}
+  .g-2{grid-template-columns:1fr 420px}
+  .g-3{grid-template-columns:repeat(3,1fr)}
+  @media (max-width:980px){.g-2{grid-template-columns:1fr}.g-3{grid-template-columns:1fr}}
+  .card{background:linear-gradient(180deg,var(--card),#0b1630);border:1px solid var(--glass);padding:16px;border-radius:12px;box-shadow:0 8px 30px rgba(3,7,20,.6)}
+  .muted{color:var(--muted)}
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px}
+  input[type="file"]{color:var(--muted)}
+  .btn{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#021028;padding:10px 12px;border-radius:10px;border:none;font-weight:700;cursor:pointer}
+  .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .small{font-size:13px;color:var(--muted)}
+  canvas{background:transparent;border-radius:8px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:8px;border-bottom:1px dashed rgba(255,255,255,0.03);text-align:left}
+  .kpi{display:flex;gap:12px;flex-wrap:wrap}
+  .kpi .box{background:#06122b;padding:12px;border-radius:10px;min-width:150px}
+  .kpi b{display:block;font-size:18px}
+  .tips{margin-top:12px;color:var(--muted);font-size:13px}
+  .category-chip{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);font-size:12px;color:var(--muted)}
+  .sim{display:flex;gap:10px;align-items:center;margin-top:8px}
+  .legend{display:flex;gap:8px;flex-wrap:wrap}
+  .legend .item{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:13px}
+  .sw{width:14px;height:12px;border-radius:3px}
+  footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
+  .notice{font-size:13px;color:var(--muted);margin-top:8px}
+  .sample-link{color:var(--accent);cursor:pointer;text-decoration:underline}
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Inflation Insights</h1>
+        <p class="muted">See how inflation affects you — not just the headline CPI. Upload transactions or use the sample to get a personalized view.</p>
+      </div>
+      <div class="row">
+        <span class="category-chip">Personal Inflation</span>
+        <span class="category-chip">Category Contributions</span>
+        <span class="category-chip">What-if Simulator</span>
+      </div>
+    </header>
+
+    <main class="grid g-2">
+
+      <!-- LEFT: Main interactive area -->
+      <section class="card">
+        <h3 style="margin-top:0">Upload Transactions</h3>
+        <p class="muted">CSV with columns: <code>date, description, amount, currency</code>. Dates as YYYY-MM-DD or common formats. Amount should be positive for spending.</p>
+
+        <div style="display:flex;gap:12px;align-items:center;margin-top:10px">
+          <input id="fileInput" type="file" accept=".csv" />
+          <button id="useSample" class="btn">Use Sample Data</button>
+          <button id="downloadSample" class="btn ghost">Download Sample CSV</button>
+        </div>
+        <div class="notice" id="fileNotice"></div>
+
+        <hr style="border:none;border-top:1px dashed rgba(255,255,255,0.03);margin:14px 0"/>
+
+        <div class="kpi" id="kpiRow" style="margin-bottom:8px">
+          <div class="box"><small class="muted">Personal Inflation (YoY)</small><b id="personalInflation">—</b><div class="small" id="piExtra"></div></div>
+          <div class="box"><small class="muted">Baseline Month</small><b id="baselineMonth">—</b><div class="small muted">Used to compute weights</div></div>
+          <div class="box"><small class="muted">Current Month</small><b id="currentMonth">—</b><div class="small muted">Latest month in your data</div></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <h4 style="margin:6px 0 8px">Personal vs Official CPI</h4>
+            <canvas id="cpiChart" height="200"></canvas>
+          </div>
+          <div>
+            <h4 style="margin:6px 0 8px">Category Contributions</h4>
+            <canvas id="contribChart" height="200"></canvas>
+          </div>
+        </div>
+
+        <h4 style="margin:12px 0 8px">Spending by Category (latest month)</h4>
+        <canvas id="spendChart" height="120"></canvas>
+
+        <div style="margin-top:12px" id="recommendations">
+          <h4 style="margin:6px 0">Recommendations</h4>
+          <ul id="recoList" class="muted"></ul>
+        </div>
+
+        <div style="margin-top:12px">
+          <h4 style="margin:6px 0">What-if Simulator</h4>
+          <p class="muted">Try reducing spending in a category — see how much you'd save monthly and how much it reduces your personal inflation contribution.</p>
+          <div id="simControls" class="muted"></div>
+          <div style="margin-top:8px" id="simResult" class="muted"></div>
+        </div>
+      </section>
+
+      <!-- RIGHT: Info / explanation / sample data -->
+      <aside class="card">
+        <h3 style="margin-top:0">How it works (simple)</h3>
+        <ol class="muted" style="padding-left:18px">
+          <li>We group your transactions by category (Groceries, Transport, Rent, Utilities...).</li>
+          <li>We compute each category's share of your spending in a baseline month (same month last year when possible).</li>
+          <li>We read a CPI YoY inflation number per category for the current month and multiply by your baseline shares to get your <b>Personal Inflation</b>.</li>
+        </ol>
+
+        <hr style="border:none;border-top:1px dashed rgba(255,255,255,0.03);margin:12px 0"/>
+
+        <h4 style="margin:6px 0">Quick definitions (for everyone)</h4>
+        <p class="muted"><b>CPI (Consumer Price Index)</b> — official measure of price changes across typical categories (food, transport, etc.).</p>
+        <p class="muted"><b>Personal Inflation</b> — the price increase that matters to you based on how you spend your money.</p>
+
+        <hr style="border:none;border-top:1px dashed rgba(255,255,255,0.03);margin:12px 0"/>
+
+        <h4 style="margin:6px 0">Ancient forms of money (kid-friendly!)</h4>
+        <ul class="muted" style="padding-left:18px">
+          <li><b>Barter</b>: trade a goat for rice.</li>
+          <li><b>Shells</b>: used as money in many places long ago.</li>
+          <li><b>Coins</b>: metal pieces stamped by kings.</li>
+          <li><b>Paper money</b>: easier to carry than metal.</li>
+          <li><b>Digital money</b>: numbers in a bank today!</li>
+        </ul>
+
+        <hr style="border:none;border-top:1px dashed rgba(255,255,255,0.03);margin:12px 0"/>
+
+        <h4 style="margin:6px 0">Basics for kids (grade 2–3)</h4>
+        <p class="muted">“Money is what we use to buy things. If the price of bread goes up, your saved coins buy less bread — that's inflation.”</p>
+
+        <h4 style="margin:6px 0">Sample CSV (download)</h4>
+        <p class="muted">Click to download a sample transactions file matching expected columns.</p>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button id="downloadSampleBtn" class="btn ghost">Download sample CSV</button>
+        </div>
+
+        <hr style="border:none;border-top:1px dashed rgba(255,255,255,0.03);margin:12px 0"/>
+
+        <h4 style="margin:6px 0">Notes & disclaimers</h4>
+        <p class="muted" style="font-size:13px">This demo uses a toy CPI dataset for visualization. For live deployment, replace the CPI JSON with official CPI data from your country's statistics office (or FRED / World Bank APIs).</p>
+      </aside>
+
+    </main>
+
+    <footer>Made for Hack the Economy · <span class="muted">Inflation Insights demo</span></footer>
+  </div>
+
+<script>
+/* ---------------------------
+   Embedded CPI & category rules
+   --------------------------- */
+const CPI_DATA = {
+  default_inflation: 5.0,
+  headline: {
+    "2024-08": 7.0, "2024-09": 6.3, "2024-10":5.6, "2024-11":5.2,
+    "2024-12":5.4, "2025-01":5.5, "2025-02":5.1, "2025-03":4.8,
+    "2025-04":5.2, "2025-05":4.9, "2025-06":5.1, "2025-07":5.6, "2025-08":5.8
+  },
+  categories: {
+    "Food & Groceries": {"2025-08":7.9, "2025-07":7.2, "2025-06":6.5},
+    "Transport": {"2025-08":6.2, "2025-07":5.1, "2025-06":4.8},
+    "Rent & Housing": {"2025-08":4.5, "2025-07":4.3, "2025-06":4.2},
+    "Utilities": {"2025-08":5.0, "2025-07":4.8},
+    "Dining Out": {"2025-08":6.8},
+    "Healthcare": {"2025-08":5.9},
+    "Education": {"2025-08":5.2},
+    "Entertainment": {"2025-08":4.0},
+    "Other": {"2025-08":5.0}
+  }
+};
+
+const CATEGORY_RULES = {
+  "Food & Groceries":["grocery","supermarket","dmart","reliance","kirana","vegetable","milk","spencer","grocer","store","safeway","mart","big bazaar"],
+  "Dining Out":["swiggy","zomato","ubereats","restaurant","cafe","pizza","burger","kfc","domino","dine"],
+  "Transport":["uber","ola","fuel","petrol","diesel","metro","bus","rail","auto","cab","fastag","taxi"],
+  "Rent & Housing":["rent","landlord","broker","maintenance","housing","lease"],
+  "Utilities":["electric","electricity","power","water","gas","broadband","wifi","internet","phone","dth"],
+  "Healthcare":["pharmacy","chemist","apollo","1mg","clinic","hospital","doctor","medic","pharma"],
+  "Education":["school","college","tuition","course","coursera","udemy","byju","edtech","exam"],
+  "Entertainment":["netflix","prime","hotstar","bookmyshow","gaming","steam","playstation"],
+  "Other":[]
+};
+
+/* ---------------------------
+   Sample CSV (string)
+   --------------------------- */
+const SAMPLE_CSV = `date,description,amount,currency
+2024-08-05,DMart groceries,2500,INR
+2024-08-08,Uber rides,600,INR
+2024-08-10,Rent to Landlord,15000,INR
+2024-08-12,Tata Power Electricity,1900,INR
+2024-08-15,Swiggy order,650,INR
+2025-07-05,DMart groceries,3200,INR
+2025-07-12,Uber rides,740,INR
+2025-07-10,Rent to Landlord,16500,INR
+2025-08-03,DMart groceries,3350,INR
+2025-08-06,Uber rides,780,INR
+2025-08-10,Rent to Landlord,16800,INR
+2025-08-12,Tata Power Electricity,2100,INR
+2025-08-13,Swiggy order,950,INR
+2025-08-14,Apollo pharmacy,950,INR`;
+
+/* ---------------------------
+   DOM refs & charts
+   --------------------------- */
+const fileInput = document.getElementById('fileInput');
+const useSample = document.getElementById('useSample');
+const downloadSampleBtn = document.getElementById('downloadSampleBtn');
+const fileNotice = document.getElementById('fileNotice');
+
+const personalInflationEl = document.getElementById('personalInflation');
+const baselineMonthEl = document.getElementById('baselineMonth');
+const currentMonthEl = document.getElementById('currentMonth');
+const piExtraEl = document.getElementById('piExtra');
+const recoListEl = document.getElementById('recoList');
+const simControlsEl = document.getElementById('simControls');
+const simResultEl = document.getElementById('simResult');
+
+const cpiCtx = document.getElementById('cpiChart').getContext('2d');
+const contribCtx = document.getElementById('contribChart').getContext('2d');
+const spendCtx = document.getElementById('spendChart').getContext('2d');
+
+let cpiChart, contribChart, spendChart;
+
+/* ---------------------------
+   Utility helpers
+   --------------------------- */
+function parseCSV(text){
+  // Very simple CSV parser for this demo
+  const lines = text.trim().split(/\r?\n/);
+  if(lines.length<2) return [];
+  const headers = lines[0].split(',').map(h=>h.trim().toLowerCase());
+  return lines.slice(1).map(line=>{
+    const cols = line.split(',').map(c=>c.trim());
+    const obj = {};
+    headers.forEach((h,i)=> obj[h]=cols[i]!==undefined?cols[i].trim():'');
+    // normalize
+    obj.date = new Date(obj.date);
+    obj.amount = Number(obj.amount);
+    return obj;
+  }).filter(r=>!isNaN(r.date) && !isNaN(r.amount));
+}
+
+function monthKey(dt){
+  const d = new Date(dt);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function matchCategory(desc){
+  const t = (desc||'').toLowerCase();
+  let best="Other", bestScore=0;
+  for(const [cat, kws] of Object.entries(CATEGORY_RULES)){
+    let score=0;
+    for(const kw of kws){
+      if(t.includes(kw)) score++;
+    }
+    if(score>bestScore){ bestScore=score; best=cat; }
+  }
+  return best;
+}
+
+function cpiCategoryYoY(cat, month){
+  const bycat = CPI_DATA.categories[cat];
+  if(bycat && bycat[month]!==undefined) return bycat[month];
+  // fallback to headline for month or default
+  if(CPI_DATA.headline[month]!==undefined) return CPI_DATA.headline[month];
+  return CPI_DATA.default_inflation;
+}
+
+/* ---------------------------
+   Core compute function
+   --------------------------- */
+function computePersonalInflation(transactions){
+  if(!transactions || transactions.length===0) return null;
+
+  // annotate
+  transactions.forEach(t=>{
+    t.category = matchCategory(t.description);
+    t.month = monthKey(t.date);
+  });
+
+  // determine latest month and baseline (same month last year)
+  const months = Array.from(new Set(transactions.map(t=>t.month))).sort();
+  const latestMonth = months[months.length-1];
+  // baseline = same month last year if exists else earliest month
+  const latestDate = new Date(latestMonth + '-01');
+  const baselineDate = new Date(latestDate); baselineDate.setFullYear(latestDate.getFullYear() - 1);
+  let baselineMonth = monthKey(baselineDate);
+  if(!months.includes(baselineMonth)) baselineMonth = months[0];
+
+  // weights: category share in baseline month
+  const baseSpends = {};
+  transactions.filter(t=>t.month===baselineMonth).forEach(t=>{
+    baseSpends[t.category] = (baseSpends[t.category]||0) + t.amount;
+  });
+  let baseTotal = Object.values(baseSpends).reduce((a,b)=>a+b,0);
+  if(baseTotal<=0){
+    // fallback: use 3-month average around baseline date
+    const byMonth = {};
+    transactions.forEach(t=>{ byMonth[t.month] = (byMonth[t.month]||0) + t.amount });
+    const monthsAround = months.filter(m=>{
+      const d = new Date(m + '-01');
+      return Math.abs((d - baselineDate)/(1000*60*60*24)) <= 45; // ~1.5 months
+    });
+    let fallbackTotal = 0;
+    monthsAround.forEach(m=>{
+      fallbackTotal += byMonth[m]||0;
+    });
+    baseTotal = fallbackTotal || 1;
+    // distribute weights proportionally across categories overall
+    const overall = {};
+    transactions.forEach(t => overall[t.category] = (overall[t.category]||0) + t.amount);
+    for(const c of Object.keys(overall)) baseSpends[c] = overall[c];
+  }
+
+  // compute weights
+  const weights = {};
+  for(const [cat,amt] of Object.entries(baseSpends)) weights[cat] = amt / baseTotal;
+
+  // categories union (transactions + CPI list)
+  const cats = Array.from(new Set([...Object.keys(CATEGORY_RULES), ...transactions.map(t=>t.category)])).sort();
+
+  // personal inflation = sum(weights * cpiYoY_currentMonth)
+  const breakdown = [];
+  let personal = 0;
+  for(const cat of cats){
+    const w = weights[cat] || 0.0;
+    const infl = cpiCategoryYoY(cat, latestMonth);
+    const contrib = w * infl;
+    breakdown.push({category:cat, weight:w, cpiYoY:infl, contribution:contrib});
+    personal += contrib;
+  }
+
+  // compute latest and baseline monthly spend totals
+  const latestTotal = transactions.filter(t=>t.month===latestMonth).reduce((a,b)=>a + b.amount,0);
+  const baselineTotalSpend = transactions.filter(t=>t.month===baselineMonth).reduce((a,b)=>a + b.amount,0) || baseTotal;
+
+  // estimated extra per month if only prices changed
+  const expectedToday = baselineTotalSpend * (1 + personal/100.0);
+  const delta = Math.max(0, expectedToday - baselineTotalSpend);
+
+  return {
+    personalInflation: Number(personal.toFixed(2)),
+    baselineMonth, latestMonth,
+    breakdown, latestTotal, baselineTotalSpend: Number(baselineTotalSpend.toFixed(2)),
+    extraPerMonth: Number(delta.toFixed(2))
+  };
+}
+
+/* ---------------------------
+   Chart helpers
+   --------------------------- */
+
+function renderCharts(result){
+  // Personal vs Headline line chart (show last 6 months)
+  const monthsToShow = 6;
+  // Build last N months from CPI_DATA.headline keys, but prefer months relative to latestMonth
+  const allMonths = Object.keys(CPI_DATA.headline).sort(); // ascending
+  const latest = result.latestMonth;
+  const idx = allMonths.indexOf(latest);
+  const start = Math.max(0, (idx - (monthsToShow-1)));
+  const months = allMonths.slice(start, idx+1);
+
+  const headlineSeries = months.map(m => CPI_DATA.headline[m] !== undefined ? CPI_DATA.headline[m] : CPI_DATA.default_inflation);
+  const personalSeries = months.map(m=>{
+    // compute personal inflation at that month by using that month as "currentMonth" but same baseline month - approximate using same weights
+    // For demo simplicity we'll show same personalInflation value for latest month and blanks for earlier months
+    return m === result.latestMonth ? result.personalInflation : null;
+  });
+
+  if(cpiChart) cpiChart.destroy();
+  cpiChart = new Chart(cpiCtx, {
+    type:'line',
+    data:{
+      labels: months.map(m=>m),
+      datasets:[
+        {label:'Headline CPI YoY (%)', data: headlineSeries, tension:0.3, borderColor:'#9fd1ff', fill:false},
+        {label:'Your Personal Inflation (%)', data: personalSeries, tension:0.3, borderColor:'#57a6ff', fill:false, spanGaps:true}
+      ]
+    },
+    options:{plugins:{legend:{labels:{color:'#dbefff'}}}, scales:{x:{ticks:{color:'#dbefff'}}, y:{ticks:{color:'#dbefff'}}}}
+  });
+
+  // Category contributions (horizontal bar)
+  const topCats = result.breakdown.slice().sort((a,b)=>b.contribution - a.contribution).slice(0,8);
+  if(contribChart) contribChart.destroy();
+  contribChart = new Chart(contribCtx, {
+    type:'bar',
+    data:{
+      labels: topCats.map(t=>t.category),
+      datasets:[{label:'Weighted contribution (pct points)', data: topCats.map(t=>Number((t.contribution).toFixed(2))), backgroundColor: topCats.map((_,i)=>i%2? '#7ef0ff':'#57a6ff')}]
+    },
+    options:{indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{ticks:{color:'#dbefff'}}, y:{ticks:{color:'#dbefff'}}}}
+  });
+
+  // Spend by category (latest month)
+  // Build latest month spends
+  const sampleCats = result.breakdown.map(b=>b.category);
+  // We'll extract latest-month spend per category from global transactions stored below
+  const latestSpends = {};
+  window._lastTransactions.filter(t=>t.month===result.latestMonth).forEach(t=>{
+    latestSpends[t.category] = (latestSpends[t.category]||0) + t.amount;
+  });
+  const spendLabels = Object.keys(latestSpends);
+  const spendValues = spendLabels.map(k=>latestSpends[k]);
+  if(spendChart) spendChart.destroy();
+  spendChart = new Chart(spendCtx, {
+    type:'doughnut',
+    data:{labels:spendLabels, datasets:[{data:spendValues, backgroundColor: spendLabels.map((_,i)=> i%2? '#6fb8ff':'#2f8fff')}]},
+    options:{plugins:{legend:{position:'bottom', labels:{color:'#dbefff'}}}}
+  });
+}
+
+/* ---------------------------
+   Recommendations generator
+   --------------------------- */
+function recommendations(breakdown){
+  // sort by contribution desc
+  const big = breakdown.slice().sort((a,b)=>b.contribution - a.contribution).slice(0,6);
+  const actions = [];
+  for(const r of big){
+    const cat = r.category;
+    if(cat === "Transport") actions.push("Try combining trips or use monthly passes; consider carpooling or public transport.");
+    else if(cat==="Food & Groceries") actions.push("Buy seasonal produce, bulk staples, or store brands; compare prices weekly.");
+    else if(cat==="Rent & Housing") actions.push("Negotiate rent on renewal or explore shared accommodation options.");
+    else if(cat==="Utilities") actions.push("Switch to energy-saving appliances; compare plans and negotiate broadband deals.");
+    else if(cat==="Dining Out") actions.push("Cook at home 2–3 times a week; use dining coupons and weekday offers.");
+    else if(cat==="Healthcare") actions.push("Check for generics, use telemedicine, or buy medicines from reliable discount pharmacies.");
+    else if(cat==="Entertainment") actions.push("Rotate streaming subscriptions; use family plans.");
+    else actions.push(`Trim 5–10% from ${cat} by seeking discounts and cheaper alternatives.`);
+  }
+  return Array.from(new Set(actions)).slice(0,6);
+}
+
+/* ---------------------------
+   Simulation UI & logic
+   --------------------------- */
+function buildSimControls(result){
+  simControlsEl.innerHTML = '';
+  // create a slider for each top 6 categories present in latest spends
+  const latestSpends = {};
+  window._lastTransactions.filter(t=>t.month===result.latestMonth).forEach(t=>{
+    latestSpends[t.category] = (latestSpends[t.category]||0) + t.amount;
+  });
+  const entries = Object.entries(latestSpends).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  if(entries.length===0){ simControlsEl.textContent = 'No spend data for the latest month to simulate.'; return; }
+
+  entries.forEach(([cat, amt])=>{
+    const wrapper = document.createElement('div');
+    wrapper.style.marginBottom = '10px';
+    wrapper.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:13px;color:#dbefff">${cat} — ${formatCurrency(amt)}</div>
+        <div style="font-size:13px;color:var(--muted)">Reduce by <span id="pct-${cat}">10</span>%</div>
+      </div>
+      <input id="s-${cat}" type="range" min="0" max="100" step="1" value="10" style="width:100%"/>
+    `;
+    simControlsEl.appendChild(wrapper);
+    document.getElementById(`s-${cat}`).addEventListener('input', ()=>{
+      document.getElementById(`pct-${cat}`).textContent = document.getElementById(`s-${cat}`).value;
+      computeSimResult(result);
+    });
+  });
+
+  // initial compute
+  computeSimResult(result);
+}
+
+function computeSimResult(result){
+  // read sliders and compute new baseline weights and personal inflation impact
+  const latestSpends = {};
+  window._lastTransactions.filter(t=>t.month===result.latestMonth).forEach(t=>{
+    latestSpends[t.category] = (latestSpends[t.category]||0) + t.amount;
+  });
+  let newLatestTotal = 0;
+  const reductions = {};
+  Object.keys(latestSpends).forEach(cat=>{
+    const slider = document.getElementById(`s-${cat}`);
+    if(!slider) return;
+    const pct = Number(slider.value)/100;
+    const newAmt = latestSpends[cat] * (1 - pct);
+    reductions[cat] = latestSpends[cat] - newAmt;
+    newLatestTotal += newAmt;
+  });
+  // recompute personal inflation effect roughly by reducing latest spend influence on contribution:
+  // Approach: compute original contribution (w * CPI). If user reduces that category spending, in short-run their extra per-month might reduce.
+  // For demo, estimate monthly savings = sum(reductions)
+  const saved = Object.values(reductions).reduce((a,b)=>a+b,0);
+
+  // Also estimate reduction in weighted contribution: we will recalc personal inflation using baseline weights but reduced latest spending -> approximate
+  // Simpler: compute how much of extraPerMonth would be avoided: if saved/ latestTotal * extraPerMonth
+  const avoided = (saved / (result.latestTotal || 1)) * result.extraPerMonth;
+
+  simResultEl.innerHTML = `Estimated immediate monthly savings: <b style="color:var(--accent)">${formatCurrency(saved)}</b>.
+  This would reduce your extra monthly cost due to inflation by about <b style="color:var(--accent)">${formatCurrency(avoided)}</b>. (Approx.)`;
+}
+
+/* ---------------------------
+   UI Helpers
+   --------------------------- */
+function formatCurrency(n){
+  if(n===undefined || n===null) return '₹0';
+  return '₹' + Number(n).toLocaleString('en-IN', {maximumFractionDigits:0});
+}
+
+/* ---------------------------
+   File handling & orchestration
+   --------------------------- */
+function showError(msg){
+  fileNotice.textContent = msg;
+  fileNotice.style.color = '#ffd1c1';
+}
+function showInfo(msg){
+  fileNotice.textContent = msg;
+  fileNotice.style.color = '#cfe7ff';
+}
+
+fileInput.addEventListener('change', async (ev)=>{
+  const f = ev.target.files && ev.target.files[0];
+  if(!f){ showError('No file selected'); return; }
+  if(!f.name.endsWith('.csv')){ showError('Please upload a .csv file'); return; }
+  showInfo('Reading file...');
+  const text = await f.text();
+  const transactions = parseCSV(text);
+  if(transactions.length===0){ showError('No valid transactions found. Ensure CSV has date, description, amount columns.'); return; }
+  showInfo(`Loaded ${transactions.length} transactions.`);
+  window._lastTransactions = transactions;
+  runAnalysis(transactions);
+});
+
+useSample.addEventListener('click', ()=>{
+  const transactions = parseCSV(SAMPLE_CSV);
+  window._lastTransactions = transactions;
+  showInfo('Sample data loaded.');
+  runAnalysis(transactions);
+});
+
+downloadSampleBtn.addEventListener('click', ()=>{
+  const blob = new Blob([SAMPLE_CSV], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'sample_transactions.csv'; document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+});
+
+/* ---------------------------
+   Main analysis runner
+   --------------------------- */
+function runAnalysis(transactions){
+  const result = computePersonalInflation(transactions);
+  if(!result){ showError('Unable to compute personal inflation'); return; }
+
+  personalInflationEl.textContent = result.personalInflation + ' %';
+  baselineMonthEl.textContent = result.baselineMonth;
+  currentMonthEl.textContent = result.latestMonth;
+  piExtraEl.textContent = result.extraPerMonth ? `You are paying ~ ${formatCurrency(result.extraPerMonth)} more per month (price changes only).` : '';
+
+  // render recommendations
+  const recs = recommendations(result.breakdown);
+  recoListEl.innerHTML = '';
+  recs.forEach(r=>{
+    const li = document.createElement('li'); li.textContent = r; recoListEl.appendChild(li);
+  });
+
+  // render charts
+  renderCharts(result);
+
+  // build simulation controls
+  buildSimControls(result);
+  showInfo('Analysis complete.');
+}
+
+/* ---------------------------
+   Initialization: load sample by default
+   --------------------------- */
+document.addEventListener('DOMContentLoaded', ()=>{
+  // load sample automatically for immediate demo
+  const transactions = parseCSV(SAMPLE_CSV);
+  window._lastTransactions = transactions;
+  runAnalysis(transactions);
+});
+</script>
+</body>
+</html>

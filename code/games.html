@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Finance Arcade — Multi-Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg: #0d1222; --panel:#0f1a36; --panel-2:#0b1326; --muted:#9fb0d8; --accent:#5ad0ff; --accent-2:#8be7ff;
+    --good:#34d399; --warn:#ffd86b; --bad:#ff7b7b;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:linear-gradient(180deg,var(--bg),#051026 80%);color:#e6f2ff;min-height:100vh;display:flex;flex-direction:column}
+  header{padding:18px 22px;background:rgba(255,255,255,0.02);display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,0.03)}
+  header h1{margin:0;color:var(--accent);font-size:18px}
+  .wrap{max-width:1200px;margin:20px auto;padding:0 18px;flex:1;display:grid;grid-template-columns: 320px 1fr;gap:18px}
+  /* sidebar tabs */
+  .sidebar{background:linear-gradient(180deg,var(--panel),#071128);border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.04)}
+  .tabs{display:flex;flex-direction:column;gap:8px}
+  .tab-btn{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;cursor:pointer;border:1px solid transparent}
+  .tab-btn:hover{background:rgba(90,208,255,0.04);border-color:rgba(90,208,255,0.06)}
+  .tab-btn.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#021028;font-weight:700}
+  .small{font-size:13px;color:var(--muted)}
+  /* content */
+  .content{display:flex;flex-direction:column;gap:12px}
+  .card{background:linear-gradient(180deg,var(--panel),#08102a);border-radius:12px;padding:16px;border:1px solid rgba(255,255,255,0.04)}
+  h2{margin:0 0 8px 0;color:var(--accent)}
+  label{color:var(--muted);font-size:13px;display:block;margin-top:8px}
+  input,select,button {font-family:inherit}
+  input[type="range"]{width:100%}
+  input[type="number"], input[type="text"], select {padding:8px;border-radius:8px;border:none;background:#071020;color:#e6f2ff;min-width:80px}
+  .btn{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#021028;border:none;padding:10px 12px;border-radius:8px;font-weight:700;cursor:pointer}
+  .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+  .muted{color:var(--muted)}
+  .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:8px}
+  .metric{background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;min-width:120px;text-align:center}
+  .success{background:rgba(52,214,153,0.08);color:var(--good);padding:8px;border-radius:8px}
+  .error{background:#3a1720;color:var(--bad);padding:8px;border-radius:8px}
+  canvas{background:transparent;border-radius:8px}
+  footer{padding:12px;text-align:center;color:var(--muted);font-size:13px}
+  @media (max-width:980px){
+    .wrap{grid-template-columns:1fr; padding:12px}
+    .sidebar{order:2}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Finance Arcade</h1>
+  <div class="small">Play smart — learn money. (All games local — no backend needed)</div>
+</header>
+
+<div class="wrap">
+
+  <!-- LEFT: Tabs -->
+  <aside class="sidebar">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="display:flex;flex-direction:column">
+        <div class="small">Player</div>
+        <strong id="playerNameDisplay">Guest</strong>
+      </div>
+      <div>
+        <input id="playerName" type="text" placeholder="Your name" style="background:#071020;color:#e6f2ff;padding:6px;border-radius:8px;border:none" />
+      </div>
+    </div>
+
+    <div class="tabs" role="tablist" aria-orientation="vertical">
+      <div class="tab-btn active" data-tab="budget" role="tab">💼 Budget Balancer<div class="small">50/30/20 practice</div></div>
+      <div class="tab-btn" data-tab="savings" role="tab">🏁 Savings Race<div class="small">streaks & strategy</div></div>
+      <div class="tab-btn" data-tab="invest" role="tab">📈 Investment Simulator<div class="small">risk & reward</div></div>
+      <div class="tab-btn" data-tab="loan" role="tab">🔒 Loan Shark Escape<div class="small">beat the interest</div></div>
+      <div class="tab-btn" data-tab="quiz" role="tab">❓ Quiz Battle<div class="small">timed questions</div></div>
+      <div class="tab-btn" data-tab="mini" role="tab">🎯 Mini Challenges<div class="small">quick wins</div></div>
+    </div>
+
+    <div style="margin-top:12px" class="card">
+      <div class="small">Total Coins</div>
+      <div id="coins" class="metric" style="font-size:18px">0</div>
+      <div class="small" style="margin-top:8px">Coins are earned by completing games — useful for unlocking hints in other games.</div>
+    </div>
+  </aside>
+
+  <!-- RIGHT: Game Content -->
+  <main class="content">
+
+    <!-- Budget Balancer -->
+    <section id="tab-budget" class="card" role="tabpanel">
+      <h2>💼 Budget Balancer</h2>
+      <p class="muted">Allocate 100 points to Needs, Wants, Savings, Debt. Aim for 50 / 30 / 20. Get a score, tips, and a donut chart.</p>
+
+      <div class="row">
+        <label>Needs <span id="bNeedsV">50</span></label>
+        <input id="bNeeds" type="range" min="0" max="100" value="50" />
+      </div>
+      <div class="row">
+        <label>Wants <span id="bWantsV">30</span></label>
+        <input id="bWants" type="range" min="0" max="100" value="30" />
+      </div>
+      <div class="row">
+        <label>Savings <span id="bSaveV">20</span></label>
+        <input id="bSave" type="range" min="0" max="100" value="20" />
+      </div>
+      <div class="row">
+        <label>Debt <span id="bDebtV">0</span></label>
+        <input id="bDebt" type="range" min="0" max="100" value="0" />
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="btnBudgetScore">Score Budget</button>
+        <button class="btn ghost" id="btnBudgetAuto">Auto 50/30/20</button>
+        <div class="metric" id="budgetScoreBox">—</div>
+      </div>
+
+      <div id="budgetHint" style="margin-top:12px" class="muted">Tip: try to have at least 10% savings and some debt repayment.</div>
+      <canvas id="budgetChart" height="160" style="margin-top:12px"></canvas>
+    </section>
+
+    <!-- Savings Race -->
+    <section id="tab-savings" class="card" hidden role="tabpanel">
+      <h2>🏁 Savings Race</h2>
+      <p class="muted">Every round you earn income — decide how much to save and choose a strategy. Reach the goal faster than random events can drain you.</p>
+
+      <div class="row">
+        <label>Monthly Income (₹) <input id="srIncome" type="number" value="50000" /></label>
+        <label>Goal (₹) <input id="srGoal" type="number" value="200000" /></label>
+        <label>Monthly Save % <input id="srSavePct" type="number" value="20" /></label>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="srNextRound">Simulate Round</button>
+        <button class="btn ghost" id="srReset">Reset</button>
+        <div class="metric" id="srStatus">Saved: ₹0</div>
+      </div>
+
+      <div id="srLog" style="margin-top:12px" class="muted">Play rounds to reach your goal. Random events (bonus/expense) will occur each round.</div>
+      <canvas id="srChart" height="140" style="margin-top:12px"></canvas>
+    </section>
+
+    <!-- Investment Simulator -->
+    <section id="tab-invest" class="card" hidden role="tabpanel">
+      <h2>📈 Investment Simulator</h2>
+      <p class="muted">Allocate percentages between Safe / Bonds / Equity. Simulate months — equity has volatility. Starting capital ₹10,000.</p>
+
+      <div class="row">
+        <label>Safe % <input id="invSafe" type="number" value="30" min="0" max="100" /></label>
+        <label>Bonds % <input id="invBonds" type="number" value="30" min="0" max="100" /></label>
+        <label>Equity % <input id="invEquity" type="number" value="40" min="0" max="100" /></label>
+        <label>Months <input id="invMonths" type="number" value="12" min="1" max="120" /></label>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="invSimulate">Simulate</button>
+        <button class="btn ghost" id="invRandom">Randomize</button>
+        <div class="metric" id="invResult">—</div>
+      </div>
+
+      <canvas id="invChart" height="160" style="margin-top:12px"></canvas>
+      <div id="invNarrative" class="muted" style="margin-top:8px"></div>
+    </section>
+
+    <!-- Loan Shark Escape -->
+    <section id="tab-loan" class="card" hidden role="tabpanel">
+      <h2>🔒 Loan Shark Escape</h2>
+      <p class="muted">You owe money. Choose a strategy to pay down principal & interest. See months to payoff and interest paid.</p>
+
+      <div class="row">
+        <label>Principal (₹) <input id="loanP" type="number" value="500000" /></label>
+        <label>APR (%) <input id="loanApr" type="number" value="12" /></label>
+        <label>Term (yrs) <input id="loanTerm" type="number" value="10" /></label>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <select id="loanStrategy">
+          <option value="min">Minimum Payment</option>
+          <option value="extra10">Pay 10% Extra</option>
+          <option value="extra25">Pay 25% Extra</option>
+        </select>
+        <button class="btn" id="loanSim">Simulate</button>
+        <div class="metric" id="loanMetric">—</div>
+      </div>
+
+      <canvas id="loanChart" height="160" style="margin-top:12px"></canvas>
+      <div id="loanNarr" class="muted" style="margin-top:8px"></div>
+    </section>
+
+    <!-- Quiz Battle -->
+    <section id="tab-quiz" class="card" hidden role="tabpanel">
+      <h2>❓ Quiz Battle</h2>
+      <p class="muted">Timed 60-second quiz. Answer correctly to win coins. Ready? Click Start.</p>
+
+      <div class="row">
+        <button class="btn" id="quizStart">Start Quiz</button>
+        <div class="metric" id="quizTimer">60s</div>
+        <div class="metric" id="quizScore">Score: 0</div>
+      </div>
+
+      <div id="quizArea" style="margin-top:12px"></div>
+    </section>
+
+    <!-- Mini Challenges -->
+    <section id="tab-mini" class="card" hidden role="tabpanel">
+      <h2>🎯 Mini Challenges</h2>
+      <p class="muted">Quick micro-games — do them daily for coins and tips.</p>
+      <div class="row">
+        <button class="btn" id="miniDaily">Get Today's Challenge</button>
+        <button class="btn ghost" id="miniSolve">Attempt</button>
+      </div>
+      <div id="miniBox" style="margin-top:12px" class="muted">No challenge yet.</div>
+    </section>
+
+  </main>
+
+</div>
+
+<footer>Finance Arcade — built for learning. All games run locally. Your progress stored in browser.</footer>
+
+<script>
+/* ---------- Utilities ---------- */
+const state = {
+  player: localStorage.getItem('fa_player') || 'Guest',
+  coins: Number(localStorage.getItem('fa_coins') || 0)
+};
+document.getElementById('playerName').value = state.player;
+document.getElementById('playerName').addEventListener('change', e=>{
+  state.player = e.target.value || 'Guest';
+  localStorage.setItem('fa_player', state.player);
+  document.getElementById('playerNameDisplay').textContent = state.player;
+});
+document.getElementById('playerNameDisplay').textContent = state.player;
+document.getElementById('coins').textContent = state.coins;
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+    document.querySelectorAll('main section[role="tabpanel"]').forEach(s=> s.hidden = s.id !== 'tab-'+tab);
+  });
+});
+
+/* ---------- Budget Balancer ---------- */
+const bNeeds = document.getElementById('bNeeds'), bWants = document.getElementById('bWants'), bSave = document.getElementById('bSave'), bDebt = document.getElementById('bDebt');
+const bNeedsV = document.getElementById('bNeedsV'), bWantsV = document.getElementById('bWantsV'), bSaveV = document.getElementById('bSaveV'), bDebtV = document.getElementById('bDebtV');
+[bNeeds,bWants,bSave,bDebt].forEach(el=>el.addEventListener('input', updateBudgetLabels));
+function updateBudgetLabels(){ bNeedsV.textContent=bNeeds.value; bWantsV.textContent=bWants.value; bSaveV.textContent=bSave.value; bDebtV.textContent=bDebt.value; }
+updateBudgetLabels();
+
+let budgetChart;
+function drawBudgetChart(values){
+  const ctx = document.getElementById('budgetChart').getContext('2d');
+  if(budgetChart) budgetChart.destroy();
+  budgetChart = new Chart(ctx, {
+    type:'doughnut',
+    data: { labels:['Needs','Wants','Savings','Debt'], datasets:[{data:values, backgroundColor:['#5ad0ff','#8be7ff','#34d399','#ff7b7b']}]},
+    options:{plugins:{legend:{labels:{color:'#dfefff'}}}}
+  });
+}
+
+document.getElementById('btnBudgetAuto').addEventListener('click', ()=>{
+  bNeeds.value=50; bWants.value=30; bSave.value=20; bDebt.value=0; updateBudgetLabels();
+});
+
+document.getElementById('btnBudgetScore').addEventListener('click', ()=>{
+  const needs = Number(bNeeds.value), wants = Number(bWants.value), save = Number(bSave.value), debt = Number(bDebt.value);
+  const total = needs + wants + save + debt;
+  if(total !== 100){
+    document.getElementById('budgetScoreBox').innerHTML = `<div class="error">Total must equal 100 (currently ${total})</div>`;
+    return;
+  }
+  // scoring: closeness to 50/30/20 and bonus for debt repayment
+  let score = 100 - (Math.abs(needs-50) + Math.abs(wants-30) + Math.abs(save-20) + Math.abs(debt-0));
+  score = Math.round(Math.max(0, Math.min(100, score)));
+  document.getElementById('budgetScoreBox').innerHTML = `<div style="font-weight:800">${score}</div>`;
+  const tips = [];
+  if(save < 10) tips.push('Increase savings — aim for at least 10%');
+  if(debt > 20) tips.push('Consider paying more towards debt');
+  if(tips.length===0) tips.push('Nice! Balanced budget.');
+  document.getElementById('budgetHint').innerHTML = tips.join(' • ');
+  drawBudgetChart([needs,wants,save,debt]);
+  awardCoins(Math.round(score/20)); // small coin reward
+});
+
+/* ---------- Savings Race ---------- */
+let srSaved = Number(localStorage.getItem('fa_sr_saved')||0), srRounds = Number(localStorage.getItem('fa_sr_rounds')||0);
+const srStatus = document.getElementById('srStatus');
+function updateSrStatus(){ srStatus.textContent = `Saved: ₹${srSaved.toLocaleString()}`; localStorage.setItem('fa_sr_saved', srSaved); localStorage.setItem('fa_sr_rounds', srRounds); }
+updateSrStatus();
+
+let srChart;
+function drawSrChart(history){
+  const ctx = document.getElementById('srChart').getContext('2d');
+  if(srChart) srChart.destroy();
+  srChart = new Chart(ctx,{type:'line',data:{labels:history.map((_,i)=>`R${i+1}`),datasets:[{label:'Saved',data:history,borderColor:'#5ad0ff',fill:false}]},options:{scales:{y:{ticks:{color:'#dfefff'}}},plugins:{legend:{display:false}}}});
+}
+
+let srHistory = JSON.parse(localStorage.getItem('fa_sr_history')||'[]');
+if(srHistory.length>0) drawSrChart(srHistory);
+
+document.getElementById('srNextRound').addEventListener('click', ()=>{
+  const income = Number(document.getElementById('srIncome').value) || 0;
+  const goal = Number(document.getElementById('srGoal').value) || 0;
+  const savePct = Number(document.getElementById('srSavePct').value) || 0;
+  const savedThis = Math.round(income * (savePct/100));
+  // random event: 20% chance expense (50-150% of savedThis), 15% chance bonus (10-50% of saved), else steady
+  const roll = Math.random();
+  let net = savedThis;
+  let eventText = 'No event';
+  if(roll < 0.20){
+    const loss = Math.round(savedThis * (0.5 + Math.random())); // big hit
+    net = Math.max(0, savedThis - loss);
+    eventText = `Unexpected expense: -₹${loss}`;
+  } else if(roll < 0.35){
+    const bonus = Math.round(savedThis * (0.1 + Math.random()*0.4));
+    net = savedThis + bonus;
+    eventText = `Bonus! +₹${bonus}`;
+  }
+  srSaved += net; srRounds++;
+  srHistory.push(srSaved);
+  if(srHistory.length>24) srHistory.shift();
+  drawSrChart(srHistory);
+  updateSrStatus();
+  localStorage.setItem('fa_sr_history', JSON.stringify(srHistory));
+  document.getElementById('srLog').textContent = `Round ${srRounds}: Saved ₹${net} (${eventText}).`;
+  if(srSaved >= goal){
+    // success
+    document.getElementById('srLog').textContent += ` 🎉 Goal reached! Saved ₹${srSaved}`;
+    awardCoins(5);
+  }
+});
+
+document.getElementById('srReset').addEventListener('click', ()=>{
+  srSaved = 0; srRounds = 0; srHistory = []; updateSrStatus(); drawSrChart(srHistory); localStorage.removeItem('fa_sr_history'); document.getElementById('srLog').textContent='Reset done.';
+});
+
+/* ---------- Investment Simulator ---------- */
+let invChart;
+function validateInv(){
+  const s = Number(document.getElementById('invSafe').value||0);
+  const b = Number(document.getElementById('invBonds').value||0);
+  const e = Number(document.getElementById('invEquity').value||0);
+  return (s + b + e) === 100;
+}
+document.getElementById('invRandom').addEventListener('click', ()=>{
+  const e = Math.floor(20 + Math.random()*60); // 20-80
+  const s = Math.floor(10 + Math.random()*(80-e));
+  const b = 100 - e - s;
+  document.getElementById('invSafe').value = s; document.getElementById('invBonds').value = b; document.getElementById('invEquity').value = e;
+});
+
+document.getElementById('invSimulate').addEventListener('click', ()=>{
+  if(!validateInv()){ alert('Allocations must sum to 100'); return; }
+  const safePct = Number(document.getElementById('invSafe').value);
+  const bondPct = Number(document.getElementById('invBonds').value);
+  const equityPct = Number(document.getElementById('invEquity').value);
+  const months = Number(document.getElementById('invMonths').value) || 12;
+  // monthly returns assumptions (mean)
+  const safe_r = 0.002; // ~2.4% p.a.
+  const bond_r = 0.0035; // ~4.3% p.a.
+  const equity_mean = 0.0075; equity_vol = 0.035; // mean ~9% p.a., vol monthly
+  let capital = 10000;
+  const timeline = [capital];
+  for(let m=1;m<=months;m++){
+    const equity_ret = equity_mean + (Math.random()*2-1)*equity_vol;
+    const month_ret = (safePct/100)*safe_r + (bondPct/100)*bond_r + (equityPct/100)*equity_ret;
+    capital = capital * (1 + month_ret);
+    timeline.push(Math.round(capital*100)/100);
+  }
+  const final = timeline[timeline.length-1];
+  const roi = Math.round((final - 10000)/10000*10000)/100;
+  document.getElementById('invResult').textContent = `Final: ₹${final.toLocaleString()} · ROI ${roi}%`;
+  document.getElementById('invNarrative').textContent = `Allocation: Safe ${safePct}%, Bonds ${bondPct}%, Equity ${equityPct}%. Simulated ${months} months.`;
+  const ctx = document.getElementById('invChart').getContext('2d');
+  if(invChart) invChart.destroy();
+  invChart = new Chart(ctx,{type:'line',data:{labels:timeline.map((_,i)=>i),datasets:[{label:'Portfolio',data:timeline,borderColor:'#5ad0ff',backgroundColor:'rgba(90,208,255,0.08)',fill:true}]},options:{plugins:{legend:{display:false}}}});
+  // scoring: reward returns and penalize extreme equity if months low
+  let score = Math.max(0, Math.min(100, 50 + roi*1.2 - (equityPct>70 && months<12 ? 20 : 0)));
+  score = Math.round(score);
+  awardCoins(Math.round(score/40)); // small
+});
+
+/* ---------- Loan Shark Escape ---------- */
+let loanChart;
+function amort(principal, apr, monthlyPayment){
+  const monthlyR = apr/100/12;
+  let balance = principal;
+  let months = 0;
+  let totalInterest = 0;
+  const series = [];
+  while(balance > 0.5 && months < 1000){
+    months++;
+    const interest = balance * monthlyR;
+    let principalPaid = monthlyPayment - interest;
+    if(principalPaid <= 0) return null;
+    if(principalPaid > balance){
+      principalPaid = balance;
+    }
+    balance -= principalPaid;
+    totalInterest += interest;
+    series.push(Math.round((balance+0.0001)/1));
+  }
+  return {months, totalInterest: Math.round(totalInterest), series};
+}
+
+document.getElementById('loanSim').addEventListener('click', ()=>{
+  const P = Number(document.getElementById('loanP').value);
+  const apr = Number(document.getElementById('loanApr').value);
+  const yrs = Number(document.getElementById('loanTerm').value);
+  const strat = document.getElementById('loanStrategy').value;
+  // compute base monthly payment (standard amort formula)
+  const n = yrs*12;
+  const r = apr/100/12;
+  const base = r===0 ? P/n : P * (r/(1-Math.pow(1+r,-n)));
+  let monthly = base;
+  if(strat === 'extra10') monthly = base * 1.10;
+  if(strat === 'extra25') monthly = base * 1.25;
+  const res = amort(P, apr, monthly);
+  if(!res){ document.getElementById('loanMetric').innerHTML = `<div class="error">Monthly payment too low to amortize loan.</div>`; return; }
+  document.getElementById('loanMetric').innerHTML = `<div><strong>${res.months}</strong> months to payoff • Total interest ₹${res.totalInterest.toLocaleString()}</div>`;
+  document.getElementById('loanNarr').textContent = `Monthly payment: ₹${Math.round(monthly).toLocaleString()}.`;
+  const ctx = document.getElementById('loanChart').getContext('2d');
+  if(loanChart) loanChart.destroy();
+  loanChart = new Chart(ctx,{type:'line',data:{labels:res.series.map((_,i)=>i+1),datasets:[{label:'Balance',data:res.series.reverse(),borderColor:'#ff7b7b',fill:false}]},options:{plugins:{legend:{display:false}}}});
+  awardCoins(Math.round(Math.max(1, (yrs*12 - res.months)/12))); // reward for reducing term
+});
+
+/* ---------- Quiz Battle ---------- */
+const quizQuestions = [
+  {q:"Which saves reduce taxable income?", choices:['Certain retirement contributions','Buying new gadgets','Ignoring receipts'], a:0},
+  {q:"Which usually has highest interest?", choices:['Home loan','Credit card','Savings account'], a:1},
+  {q:"Rule of 72 estimates:", choices:['Doubling time ~72/rate','Monthly budget','Tax bracket'], a:0},
+  {q:"Emergency fund recommended months:", choices:['3-6 months','12-24 months','No fund needed'], a:0},
+  {q:"Diversification helps to:", choices:['Reduce risk','Guarantee profits','Increase taxes'], a:0}
+];
+
+let quizTimerInterval = null, quizTimeLeft = 60, quizScore = 0;
+document.getElementById('quizStart').addEventListener('click', startQuiz);
+function startQuiz(){
+  quizTimeLeft = 60; quizScore = 0;
+  document.getElementById('quizScore').textContent = 'Score: 0';
+  document.getElementById('quizTimer').textContent = quizTimeLeft + 's';
+  renderQuizQuestion(0);
+  if(quizTimerInterval) clearInterval(quizTimerInterval);
+  quizTimerInterval = setInterval(()=>{
+    quizTimeLeft--;
+    document.getElementById('quizTimer').textContent = quizTimeLeft + 's';
+    if(quizTimeLeft <= 0){
+      clearInterval(quizTimerInterval);
+      endQuiz();
+    }
+  },1000);
+}
+function renderQuizQuestion(idx){
+  const q = quizQuestions[idx % quizQuestions.length];
+  const area = document.getElementById('quizArea');
+  area.innerHTML = `<div style="font-weight:700">${q.q}</div>` + q.choices.map((c,i)=>`<label style="display:block;margin-top:8px"><input type="radio" name="qq" value="${i}"> ${c}</label>`).join('') + `<div style="margin-top:8px"><button class="btn" id="quizNext">Submit</button></div>`;
+  document.getElementById('quizNext').addEventListener('click', ()=>{
+    const sel = document.querySelector('input[name="qq"]:checked');
+    if(!sel){ alert('Choose an answer'); return; }
+    const val = Number(sel.value);
+    if(val === q.a){ quizScore += 10; document.getElementById('quizScore').textContent = 'Score: '+quizScore; awardCoins(1); }
+    // next question
+    renderQuizQuestion(idx+1);
+  });
+}
+function endQuiz(){
+  document.getElementById('quizArea').innerHTML = `<div class="muted">Time up! Final score: ${quizScore}</div>`;
+  awardCoins(Math.floor(quizScore/10));
+}
+
+/* ---------- Mini Challenges ---------- */
+const miniChallenges = [
+  {id:'mc1',text:'Skip one coffee and save ₹150 this week.', reward:1},
+  {id:'mc2',text:'Check your subscriptions and cancel one unused (save ₹100).', reward:1},
+  {id:'mc3',text:'Compare 2 insurance policies — find a cheaper one.', reward:2},
+  {id:'mc4',text:'Set a small automatic transfer to savings (₹500).', reward:2},
+];
+
+let currentMini = null;
+document.getElementById('miniDaily').addEventListener('click', ()=>{
+  // rotate by day to keep deterministic
+  const idx = (new Date().getDate() + (state.player?state.player.length:0)) % miniChallenges.length;
+  currentMini = miniChallenges[idx];
+  document.getElementById('miniBox').innerHTML = `<div><strong>Challenge:</strong> ${currentMini.text}</div><div class="muted">Reward: ${currentMini.reward} coins</div>`;
+});
+document.getElementById('miniSolve').addEventListener('click', ()=>{
+  if(!currentMini){ alert('Get today\'s challenge first'); return; }
+  // assume user completes it — reward
+  awardCoins(currentMini.reward);
+  document.getElementById('miniBox').innerHTML = `<div class="success">Well done! You earned ${currentMini.reward} coins.</div>`;
+  currentMini = null;
+});
+
+/* ---------- Coins / Persistence ---------- */
+function awardCoins(n){
+  if(!n || n<=0) return;
+  state.coins = (Number(state.coins) || 0) + n;
+  localStorage.setItem('fa_coins', state.coins);
+  document.getElementById('coins').textContent = state.coins;
+  // small toast
+  const prev = document.getElementById('toast'); if(prev) prev.remove();
+  const t = document.createElement('div'); t.id='toast';
+  t.style= 'position:fixed;right:18px;bottom:18px;background:rgba(90,208,255,0.12);color:#e6f2ff;padding:10px;border-radius:8px;backdrop-filter:blur(4px);';
+  t.textContent = `+${n} coins`;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),1800);
+}
+
+/* ---------- Init visuals ---------- */
+drawBudgetChart([50,30,20,0]);
+document.getElementById('budgetScoreBox').textContent = '—';
+if(srHistory.length>0) drawSrChart(srHistory);
+
+/* ---------- Keyboard hints (optional) ---------- */
+document.addEventListener('keydown', (e)=>{
+  if(e.key === '1') document.querySelector('.tab-btn[data-tab="budget"]').click();
+  if(e.key === '2') document.querySelector('.tab-btn[data-tab="savings"]').click();
+  if(e.key === '3') document.querySelector('.tab-btn[data-tab="invest"]').click();
+  if(e.key === '4') document.querySelector('.tab-btn[data-tab="loan"]').click();
+  if(e.key === '5') document.querySelector('.tab-btn[data-tab="quiz"]').click();
+  if(e.key === '6') document.querySelector('.tab-btn[data-tab="mini"]').click();
+});
+</script>
+</body>
+</html>

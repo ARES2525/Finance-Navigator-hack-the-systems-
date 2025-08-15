@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finance Navigator – Hack the Economy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #121933;
+      --text: #f5f7ff;
+      --muted: #96a0c8;
+      --accent: #6aa9ff;
+      --accent-hover: #5598ff;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card);
+    }
+
+    header h1 {
+      font-weight: 800;
+      font-size: 1.5rem;
+      color: var(--accent);
+    }
+
+    nav a {
+      color: var(--muted);
+      margin-left: 20px;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    nav a:hover {
+      color: var(--accent);
+    }
+
+    .hero {
+      text-align: center;
+      padding: 80px 20px;
+      max-width: 800px;
+      margin: auto;
+    }
+
+    .hero h2 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 1.1rem;
+      margin-bottom: 40px;
+    }
+
+    .hero button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .hero button:hover {
+      background: var(--accent-hover);
+    }
+
+    .sections {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+      padding: 40px;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .card {
+      background: var(--card);
+      padding: 24px;
+      border-radius: 16px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .card h3 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--accent);
+    }
+
+    .card p {
+      font-size: 0.95rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Finance Navigator</h1>
+    <nav>
+      <a href="understand-money.html">Understand Money</a>
+      <a href="financial-literacy.html">Financial Literacy</a>
+      <a href="inflation-insights.html">Inflation</a>
+      <a href="loan/frontend/taxes-loans.html">Taxes & Loans</a>
+      <a href="games.html">Games</a>
+    </nav>
+
+  </header>
+
+  <section class="hero">
+    <h2>Your All-in-One Personal Finance Playground</h2>
+    <p>Learn, play, and take control of your financial future. Explore interactive tools, real-time insights, and fun
+      games designed to make economics simple and engaging.</p>
+    <button onclick="document.querySelector('#understand-money').scrollIntoView({behavior: 'smooth'})">Start
+      Exploring</button>
+  </section>
+
+<section class="sections">
+  <div class="card" onclick="window.location='understand-money.html'">
+    <h3>Understand Money</h3>
+    <p>Explore how money flows in the economy with animated visual explainers and simple calculators.</p>
+  </div>
+  <div class="card" onclick="window.location='financial-literacy.html'">
+    <h3>Build Financial Literacy</h3>
+    <p>Learn budgeting, credit scores, and saving strategies through bite-sized guides and challenges.</p>
+  </div>
+  <div class="card" onclick="window.location='inflation-insights.html'">
+    <h3>Inflation Insights</h3>
+    <p>See your personal inflation rate, track price changes, and discover ways to protect your wallet.</p>
+  </div>
+  <div class="card" onclick="window.location='loan/frontend/taxes-loans.html'">
+    <h3>Taxes & Loans</h3>
+    <p>Simulate loan repayments, understand tax breakdowns, and get tips for smarter borrowing.</p>
+  </div>
+  <div class="card" onclick="window.location='games.html'">
+    <h3>Finance Games</h3>
+    <p>Play interactive games to test your budgeting skills and investment decisions in a risk-free environment.</p>
+  </div>
+</section>
+
+
+  <footer>
+    &copy; 2025 Finance Navigator – Hack the Systems Project
+  </footer>
+</body>
+
+</html>
